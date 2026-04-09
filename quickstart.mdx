@@ -1,0 +1,109 @@
+---
+title: "Quickstart"
+description: "Sign up, get an API key, and query your first schema in 2 minutes."
+---
+
+## 1. Sign up
+
+Create a free account at [hermai.ai/register](https://hermai.ai/register). No credit card required — Phase 1 is fully free.
+
+## 2. Create an API key
+
+Go to **Dashboard > API Keys** and create a new key. Copy it — you'll need it for authenticated requests.
+
+```
+hm_sk_abc123...
+```
+
+Anonymous requests work too (5 per hour), but an API key gives you 50/hour and 500/day.
+
+## 3. Query the catalog
+
+Look up all known endpoints for a domain:
+
+```bash
+curl -H "Authorization: Bearer hm_sk_abc123..." \
+     -H "X-Hermai-Intent: looking up product endpoints on allbirds.com to build a price comparison agent" \
+     "https://api.hermai.ai/v1/catalog/allbirds.com"
+```
+
+The response includes every endpoint and action the community has discovered:
+
+```json
+{
+  "domain": "allbirds.com",
+  "endpoints": [
+    {
+      "name": "shopify_products",
+      "method": "GET",
+      "url": "https://www.allbirds.com/products.json",
+      "description": "Shopify store product catalog"
+    },
+    {
+      "name": "add_to_cart",
+      "method": "POST",
+      "url": "https://www.allbirds.com/cart/add.js",
+      "headers": { "Content-Type": "application/json" },
+      "kind": "api_call",
+      "params": [
+        { "name": "id", "source": "body", "required": true },
+        { "name": "quantity", "source": "body", "required": true }
+      ]
+    }
+  ]
+}
+```
+
+## 4. Call the endpoint directly
+
+Use the URL, method, and headers from the catalog response to call the site yourself:
+
+```bash
+curl -X POST "https://www.allbirds.com/cart/add.js" \
+     -H "Content-Type: application/json" \
+     -d '{"id": 41397031600208, "quantity": 1}'
+```
+
+That's it. No browser, no proxy, no Hermai in the request path. You looked up the schema, you called the site directly.
+
+## 5. Browse the registry
+
+Explore what's available at [hermai.ai/schemas](https://hermai.ai/schemas), or via the API:
+
+```bash
+# List all schemas
+curl "https://api.hermai.ai/v1/schemas"
+
+# Filter by category
+curl "https://api.hermai.ai/v1/schemas?category=commerce"
+
+# Only verified schemas
+curl "https://api.hermai.ai/v1/schemas?verified=true"
+
+# Browse the intent taxonomy
+curl "https://api.hermai.ai/v1/categories"
+```
+
+## 6. Contribute a schema
+
+Discovered something useful? Push it to the registry so other agents can benefit:
+
+```bash
+# Install the CLI
+go install github.com/hermai-ai/hermai-cli/cmd/hermai@latest
+
+# Discover endpoints for a site (runs locally, may take 1-2 minutes)
+hermai discover https://example.com
+
+# Push to the registry
+hermai registry push schema.json
+```
+
+You earn **+50 credits per site** for contributions. Credits become your starting balance when hosted execution launches in Phase 2.
+
+## Next steps
+
+- [How Hermai works](/concepts/how-hermai-works) — the mental model
+- [Schemas](/concepts/schemas) — format, verification, contributing
+- [Catalog](/concepts/catalog) — the lookup API in detail
+- [API keys](/concepts/api-keys) — scopes and rate limits

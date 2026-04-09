@@ -1,0 +1,58 @@
+---
+title: "How Hermai works"
+description: "Contributors discover, agents consume. The mental model in two minutes."
+---
+
+## The split
+
+Hermai has two sides:
+
+1. **The CLI** ([hermai-cli](https://github.com/hermai-ai/hermai-cli), open source) — runs on your machine. It discovers website API endpoints by probing URLs, watching browser traffic, and asking an LLM to generalize what it finds into a reusable schema. This is the expensive step: it may launch a headless browser and take 10-60 seconds per site.
+
+2. **The platform** (api.hermai.ai) — a schema registry. It stores and serves the schemas that CLI users have discovered and pushed. Agents query it at runtime to get instant, structured endpoint data for any domain in the registry. No browser, no discovery cost, sub-200ms.
+
+```
+Developer                          Platform                         Agent
+    │                                  │                               │
+    │  hermai discover <url>           │                               │
+    │  (runs engine locally)           │                               │
+    │──────────────────────────────>   │                               │
+    │  hermai registry push            │                               │
+    │──────────────────────────────>   │                               │
+    │                                  │   GET /v1/catalog/{domain}    │
+    │                                  │ <────────────────────────────│
+    │                                  │   { endpoints, actions }      │
+    │                                  │ ────────────────────────────> │
+    │                                  │                               │
+    │                                  │   (agent calls site directly) │
+    │                                  │                        curl ──┘
+```
+
+## What the CLI does
+
+The CLI walks a cheapest-path-first pipeline:
+
+1. **Probe** — try the obvious things: `/products.json`, `__NEXT_DATA__`, JSON-LD, known API patterns. Most sites resolve here in under 2 seconds with no browser.
+2. **HTML extraction** — if the probe found HTML instead of JSON, extract structured content from forms, links, and page metadata.
+3. **Browser + LLM** — last resort. Launch a headless Chromium, capture all network traffic, and ask an LLM to generalize the discovered endpoints into a reusable schema.
+
+The output is a **schema** — a JSON file describing every endpoint and action the site exposes. This schema gets cached locally and can be pushed to the registry.
+
+## What the platform does
+
+The platform is a lookup-only registry:
+
+- **`GET /v1/catalog/{domain}`** — returns all endpoints and actions for a domain. This is the main agent-facing endpoint. Requires an [intent](/concepts/catalog#intent) describing why you need it.
+- **`GET /v1/schemas`** — browse and search the full registry.
+- **`POST /v1/schemas`** — push a new schema. Validated against the [intent taxonomy](/concepts/catalog#intent-taxonomy) and published immediately.
+
+The platform does **not** execute requests on your behalf. Agents call the upstream sites directly using the URLs from the catalog response. Hosted execution is coming in a future phase — [join the waitlist](https://hermai.ai/waitlist) if you're interested.
+
+## Why this split?
+
+Discovery is expensive (browser + LLM + time). Lookup is cheap (database read). By separating them:
+
+- **Contributors** pay the discovery cost once, locally, on their own machine
+- **Every agent after them** gets instant structured data for free
+- **The platform** has no compute cost for discovery — it's a registry with auth and analytics on top
+- **No vendor lock-in** — the CLI is open source (AGPL-3.0) and works offline

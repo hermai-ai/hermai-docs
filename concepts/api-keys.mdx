@@ -1,0 +1,55 @@
+---
+title: "API keys"
+description: "Authenticate requests to get higher rate limits and access the full registry."
+---
+
+## Creating a key
+
+1. Sign in at [hermai.ai/dashboard](https://hermai.ai/dashboard)
+2. Go to **API Keys**
+3. Click **Create key**, give it a label
+4. Copy the key — it's shown once and can't be retrieved later
+
+Keys look like: `hm_sk_abc123...`
+
+## Using a key
+
+Pass it as a Bearer token in the `Authorization` header:
+
+```bash
+curl -H "Authorization: Bearer hm_sk_abc123..." \
+     -H "X-Hermai-Intent: looking up Shopify endpoints for a shopping agent" \
+     "https://api.hermai.ai/v1/catalog/allbirds.com"
+```
+
+## What a key gives you
+
+| | Anonymous | With API key |
+|---|---|---|
+| Rate limit | 5 req/hour | 50 req/hour, 500/day |
+| Catalog lookup | Yes (with intent) | Yes (with intent) |
+| Browse registry | Yes | Yes |
+| Push schemas | No | Yes |
+| Download full schema package | No | Yes |
+| Activity logs in dashboard | No | Yes |
+| Earn credits | No | Yes |
+
+## Schema access toggle
+
+Each API key has a **schema access** setting that controls whether unverified schemas are included in catalog responses:
+
+- **Verified only** — catalog returns only schemas that have been reviewed and verified by the Hermai team. Safest option.
+- **All schemas** (default) — includes both verified and unverified community contributions. More coverage, less curation.
+
+You can change this per-key in the dashboard under **API Keys > Schema access**.
+
+## Revoking a key
+
+Go to **Dashboard > API Keys**, find the key, and click **Revoke**. The key stops working immediately. Revocation is permanent — create a new key if you need one.
+
+## Security
+
+- Keys authenticate your requests. They're not used for request signing — just Bearer token auth.
+- Store keys securely. Don't commit them to source control.
+- Each key is independently revocable, so you can rotate one without affecting others.
+- Keys are hashed server-side — we can't recover a lost key.

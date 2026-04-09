@@ -1,0 +1,46 @@
+---
+title: "Introduction"
+description: "Hermai is a community-driven schema registry for AI agents."
+---
+
+Hermai is a schema registry where developers contribute website API schemas and AI agents consume them. Point an agent at any domain in the registry and get back the full list of callable endpoints — URLs, methods, headers, parameters — ready to execute. No browser, no HTML parsing, no wasted tokens.
+
+Think of it as **HuggingFace, but for website APIs**.
+
+## How it works
+
+<CardGroup cols={2}>
+  <Card title="Discover with the CLI" icon="terminal">
+    Run `hermai discover` locally to find every API endpoint a website exposes. The CLI handles browser automation, LLM analysis, and schema generation — you just give it a URL.
+  </Card>
+  <Card title="Look up from the registry" icon="magnifying-glass">
+    Call `GET /v1/catalog/{domain}` to get all known endpoints for a site. The platform serves schemas contributed by the community — instant, structured, no discovery cost.
+  </Card>
+</CardGroup>
+
+## Start here
+
+<CardGroup cols={2}>
+  <Card title="Quickstart" icon="rocket" href="/quickstart">
+    Sign up, get an API key, and query your first schema in 2 minutes.
+  </Card>
+  <Card title="How Hermai works" icon="wand-magic-sparkles" href="/concepts/how-hermai-works">
+    The mental model: contributors discover, agents consume.
+  </Card>
+  <Card title="Schemas" icon="database" href="/concepts/schemas">
+    What schemas are, how to contribute them, and the verified badge.
+  </Card>
+  <Card title="Catalog" icon="compass" href="/concepts/catalog">
+    The lookup API that agents call at runtime.
+  </Card>
+  <Card title="Actions" icon="hand-pointer" href="/concepts/actions">
+    Read and write actions that schemas expose.
+  </Card>
+  <Card title="API keys" icon="key" href="/concepts/api-keys">
+    Authenticate requests and manage access.
+  </Card>
+</CardGroup>
+
+## Open source
+
+The [hermai-cli](https://github.com/hermai-ai/hermai-cli) is open source under AGPL-3.0. You can run the full discovery engine locally without an account. The platform registry is the community layer on top — browse, search, and consume schemas that others have contributed.

@@ -1,0 +1,59 @@
+---
+title: "Credits & usage"
+description: "Rate limits, credits, and how usage works in the current release."
+---
+
+## Rate limits
+
+All API requests are rate-limited. Limits depend on whether you're authenticated:
+
+| Tier | Per hour | Per day | How identity is tracked |
+|------|----------|---------|------------------------|
+| Anonymous (no API key) | 5 | — | By IP address |
+| Registered (free) | 50 | 500 | By user account |
+
+If you exceed the limit, you'll get a `429 Too Many Requests` response. The `X-Rate-Limit-Remaining` header on every response tells your agent how many requests it has left in the current window.
+
+Getting an API key is free — [sign up](https://hermai.ai/register) and create one in the dashboard.
+
+## Credits
+
+Credits are earned through contributions and community activity:
+
+| Action | Credits |
+|--------|---------|
+| Make your first request | +50 |
+| Star [hermai-cli](https://github.com/hermai-ai/hermai-cli) on GitHub | +100 |
+| Refer a friend | +100 per invite |
+| Contribute a schema | +50 per site |
+
+Credits accumulate in your account and **become your starting balance when hosted execution launches** in a future phase. In the current release, there's no billing — all access is free within the rate limits above.
+
+## What counts as a request?
+
+Every call to these endpoints counts against your rate limit:
+
+- `GET /v1/catalog/{domain}` (catalog lookup)
+- `GET /v1/schemas/{site}/package` (schema download)
+
+These do **not** count against rate limits:
+
+- `GET /v1/schemas` (browse/search the registry)
+- `GET /v1/schemas/{site}` (public schema card)
+- `GET /v1/trending`, `GET /v1/categories` (discovery surfaces)
+- `POST /v1/schemas` (pushing a schema)
+- `GET /v1/health`
+
+## Usage dashboard
+
+Your [dashboard](https://hermai.ai/dashboard) shows:
+
+- **Requests today** — how many calls you've made
+- **Schema hit rate** — how often your lookups found a cached schema
+- **Average latency** — response time across your requests
+- **Credits earned** — your accumulated credit balance
+- **Activity logs** — per-request detail with URL, status, latency, and timestamp
+
+## No billing in the current release
+
+There are no paid tiers, no invoices, no credit card required. Rate limits are the only gate. When hosted execution launches, credits will convert to a usable balance for proxied requests — contributors who built up credits early will have a head start.

@@ -1,0 +1,81 @@
+{
+  "$schema": "https://mintlify.com/docs.json",
+  "theme": "mint",
+  "name": "Hermai",
+  "colors": {
+    "primary": "#0A1410",
+    "light": "#F2EDDF",
+    "dark": "#0A1410"
+  },
+  "favicon": "/favicon.svg",
+  "navigation": {
+    "groups": [
+      {
+        "group": "Getting started",
+        "pages": [
+          "index",
+          "quickstart"
+        ]
+      },
+      {
+        "group": "Core concepts",
+        "pages": [
+          "concepts/how-hermai-works",
+          "concepts/schemas",
+          "concepts/catalog",
+          "concepts/actions",
+          "concepts/credits-and-usage",
+          "concepts/api-keys"
+        ]
+      }
+    ],
+    "global": {
+      "anchors": [
+        {
+          "anchor": "Homepage",
+          "href": "https://hermai.ai",
+          "icon": "globe"
+        },
+        {
+          "anchor": "Blog",
+          "href": "https://hermai.ai/blog",
+          "icon": "newspaper"
+        }
+      ]
+    }
+  },
+  "logo": {
+    "light": "/logo/wordmark-light.svg",
+    "dark": "/logo/wordmark-dark.svg"
+  },
+  "navbar": {
+    "links": [
+      {
+        "label": "Support",
+        "href": "mailto:support@hermai.ai"
+      }
+    ],
+    "primary": {
+      "type": "button",
+      "label": "Dashboard",
+      "href": "https://hermai.ai/dashboard"
+    }
+  },
+  "contextual": {
+    "options": [
+      "copy",
+      "view",
+      "chatgpt",
+      "claude",
+      "perplexity",
+      "mcp",
+      "cursor",
+      "vscode"
+    ]
+  },
+  "footer": {
+    "socials": {
+      "github": "https://github.com/hermai-ai"
+    }
+  }
+}

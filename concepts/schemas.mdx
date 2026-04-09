@@ -1,0 +1,339 @@
+---
+title: "Schemas"
+description: "What schemas are, how to contribute them, and the verified badge system."
+---
+
+A schema is a JSON description of how to talk to a website. It lists every endpoint and action the site exposes — URLs, HTTP methods, required headers, parameters, and response shapes. Once a schema exists for a site, any agent can look it up and call the endpoints directly, without re-discovering them.
+
+## What's in a schema
+
+A schema for a Shopify store might include:
+
+| Endpoint | Method | URL | What it does |
+|----------|--------|-----|--------------|
+| `shopify_products` | GET | `/products.json` | List the product catalog |
+| `shopify_product` | GET | `/products/{handle}.json` | Get a single product |
+| `add_to_cart` | POST | `/cart/add.js` | Add a variant to the cart |
+| `get_cart` | GET | `/cart.js` | Get current cart contents |
+
+Each endpoint carries its parameters, required headers (like `Content-Type: application/json`), and enough metadata for an agent to construct a valid HTTP request.
+
+## Schema format
+
+Schemas are JSON documents. Here's a minimal example:
+
+```json
+{
+  "site": "allbirds.com",
+  "intent_category": "commerce",
+  "schema_format_version": "0.1",
+  "name": "allbirds-products",
+  "description": "Shopify-based product catalog and cart API for allbirds.com",
+  "endpoints": [
+    {
+      "name": "shopify_products",
+      "method": "GET",
+      "url_template": "https://www.allbirds.com/products.json",
+      "description": "Public product catalog from the Shopify AJAX API",
+      "headers": {},
+      "response_schema": {
+        "type": "object",
+        "fields": [
+          { "name": "products", "type": "array" }
+        ]
+      }
+    }
+  ],
+  "actions": [
+    {
+      "name": "add_to_cart",
+      "method": "POST",
+      "url_template": "https://www.allbirds.com/cart/add.js",
+      "description": "Add a product variant to the shopping cart",
+      "kind": "api_call",
+      "transport": "api_call",
+      "headers": { "Content-Type": "application/json" },
+      "params": [
+        { "name": "id", "in": "body", "type": "integer", "required": true, "description": "Product variant ID" },
+        { "name": "quantity", "in": "body", "type": "integer", "required": true, "description": "Quantity to add" }
+      ],
+      "confidence": 0.98,
+      "source": "shopify_ajax_api"
+    }
+  ]
+}
+```
+
+### Required fields
+
+| Field | Type | Description |
+|-------|------|-------------|
+| `site` | string | The domain this schema covers (e.g. `allbirds.com`). Normalized to lowercase. |
+| `intent_category` | string | Must match a category from the [intent taxonomy](/concepts/catalog#intent-taxonomy) (e.g. `commerce`, `travel`, `jobs`). |
+| `schema_format_version` | string | Must be `"0.1"` (current version). Defaults to `"0.1"` if omitted. |
+
+### Optional fields
+
+| Field | Type | Description |
+|-------|------|-------------|
+| `name` | string | Human-readable name for the schema |
+| `description` | string | What this schema covers |
+| `version` | number | Schema version number (informational) |
+| `endpoints` | array | Read-shaped API endpoints (GET requests that return data) |
+| `actions` | array | Write-shaped or interactive actions (POST requests, cart operations, etc.) |
+| `requires_stealth` | boolean | Whether the site requires TLS fingerprinting to avoid bot detection |
+| `session` | object | Session bootstrap configuration (cookies, headers needed before requests work) |
+
+### Capability badges
+
+The registry surfaces capability signals as badges so agents know what a request requires:
+
+| Badge | Source field | What it means |
+|-------|-------------|---------------|
+| **Requires browser** | `requires_stealth: true` | The site needs Chrome-like TLS fingerprinting. Agents should use a stealth HTTP client or the CLI's `--stealth` flag. |
+| **Requires session** | `session` object present | The site needs cookies or headers bootstrapped before API calls work (e.g. clearance cookies for Cloudflare-protected sites). |
+| **Has auth** | `headers` containing `Authorization` or `X-API-*` keys | The endpoint requires authentication headers. |
+
+These badges appear on the public schema card so agents can decide whether they can handle the site before downloading the full schema.
+
+## Contributing a schema
+
+Anyone with an API key can push a schema. There are two paths:
+
+### Option 1: Use the CLI to discover and push
+
+```bash
+# Install the CLI
+go install github.com/hermai-ai/hermai-cli/cmd/hermai@latest
+
+# Discover endpoints (runs the engine locally)
+hermai discover https://example.com
+
+# Push to the registry
+hermai registry push schema.json
+```
+
+The CLI handles the schema format automatically — you don't need to write JSON by hand.
+
+### Option 2: Write and push manually
+
+If you already know the site's API (from DevTools, documentation, or testing), you can write the schema JSON yourself and push it via the API:
+
+```bash
+curl -X POST "https://api.hermai.ai/v1/schemas" \
+     -H "Authorization: Bearer hm_sk_..." \
+     -H "Content-Type: application/json" \
+     -d '{
+  "site": "allbirds.com",
+  "intent_category": "commerce",
+  "schema_format_version": "0.1",
+  "name": "allbirds-shopify",
+  "description": "Shopify AJAX API for allbirds.com — product catalog and cart",
+  "endpoints": [
+    {
+      "name": "shopify_products",
+      "method": "GET",
+      "url_template": "https://www.allbirds.com/products.json",
+      "description": "Public product catalog",
+      "headers": {},
+      "response_schema": {
+        "type": "object",
+        "fields": [
+          { "name": "products", "type": "array" }
+        ]
+      }
+    },
+    {
+      "name": "shopify_product",
+      "method": "GET",
+      "url_template": "https://www.allbirds.com/products/{handle}.json",
+      "description": "Single product detail by handle",
+      "variables": [
+        { "name": "handle", "source": "path" }
+      ]
+    }
+  ],
+  "actions": [
+    {
+      "name": "add_to_cart",
+      "method": "POST",
+      "url_template": "https://www.allbirds.com/cart/add.js",
+      "description": "Add a product variant to the shopping cart",
+      "kind": "api_call",
+      "transport": "api_call",
+      "headers": { "Content-Type": "application/json" },
+      "params": [
+        { "name": "id", "in": "body", "type": "integer", "required": true, "description": "Product variant ID" },
+        { "name": "quantity", "in": "body", "type": "integer", "required": true, "default": "1", "description": "Quantity to add" }
+      ],
+      "confidence": 0.98,
+      "source": "manual"
+    },
+    {
+      "name": "get_cart",
+      "method": "GET",
+      "url_template": "https://www.allbirds.com/cart.js",
+      "description": "Get current cart contents",
+      "kind": "api_call",
+      "transport": "api_call",
+      "headers": {},
+      "confidence": 0.98,
+      "source": "manual"
+    },
+    {
+      "name": "update_cart",
+      "method": "POST",
+      "url_template": "https://www.allbirds.com/cart/update.js",
+      "description": "Update item quantities by variant ID. Pass {variant_id: new_qty} for each line. Setting qty=0 removes the item.",
+      "kind": "api_call",
+      "transport": "api_call",
+      "headers": { "Content-Type": "application/json" },
+      "params": [
+        { "name": "updates", "in": "body", "type": "object", "required": true, "description": "Map of variant ID to quantity, e.g. {\"41397031600208\": 2}" }
+      ],
+      "confidence": 0.98,
+      "source": "manual"
+    }
+  ]
+}'
+```
+
+A successful push returns the version hash and site:
+
+```json
+{
+  "success": true,
+  "data": {
+    "version_hash": "9a0a27c4085fc661...",
+    "site": "allbirds.com",
+    "created": true
+  }
+}
+```
+
+If validation fails, you get a specific error code:
+
+```json
+{
+  "success": false,
+  "error": {
+    "code": "UNKNOWN_CATEGORY",
+    "message": "intent_category does not exist in current taxonomy"
+  }
+}
+```
+
+<Tip>
+  **Start minimal.** You don't need to map every endpoint — even a single useful endpoint is a valid contribution. Other contributors can push updated versions with more coverage later.
+</Tip>
+
+Schemas go live immediately — no approval queue.
+
+### Validation rules
+
+Every push runs through validation. If any check fails, the push is rejected with a specific error code.
+
+**Structure checks:**
+
+| Rule | Error code | Description |
+|------|-----------|-------------|
+| Valid JSON | `INVALID_JSON` | The body must parse as JSON |
+| `site` present | `MISSING_FIELD` | The `site` field is required |
+| `intent_category` present | `MISSING_FIELD` | The `intent_category` field is required |
+| Category exists | `UNKNOWN_CATEGORY` | The `intent_category` must match a slug in the [taxonomy](/concepts/catalog#intent-taxonomy). Call `GET /v1/categories` to see valid values. |
+| Format version | `UNSUPPORTED_FORMAT` | `schema_format_version` must be `"0.1"` |
+
+**Content governance:**
+
+| Rule | Error code | Description |
+|------|-----------|-------------|
+| Forbidden names | `FORBIDDEN_NAME` | Schema names must not describe circumvention techniques. Rejected patterns: `bypass`, `circumvent`, `cf-clearance`, `anti-bot`, `rotate-ip`. Name the schema after what it does (e.g. `shopify-products`), not how it beats a defense. |
+| Forbidden fields | `FORBIDDEN_FIELD` | Schemas must not contain credential or operational secret fields at any nesting depth. See [forbidden fields list](#forbidden-fields) below. |
+| Exclusion list | `SITE_EXCLUDED` | Some sites have requested removal from the registry. Pushing a schema for an excluded site is rejected. |
+
+### Forbidden fields
+
+These JSON keys are rejected if found anywhere in the schema, at any depth:
+
+| Field | Why it's forbidden |
+|-------|-------------------|
+| `proxy_credentials` | Actual proxy login credentials — a secret that must never be published |
+| `residential_proxy` | Proxy infrastructure configuration — operational, not schema data |
+| `clearance_cookie_js` | JavaScript used to generate clearance cookies — an arms-race implementation detail |
+| `clearance_cookies` | Ephemeral session cookies — site-specific and time-limited, not useful to other users |
+| `bypass_method` | Describes a circumvention technique — violates naming policy |
+| `stealth_script` | Custom anti-detection JavaScript — operational, not schema data |
+| `tls_fingerprint` | Specific TLS profile identifier — this changes frequently and is better managed by the CLI runtime than baked into a schema |
+
+<Note>
+  **Capability signals are allowed.** The distinction is between metadata that helps agents understand *what* a site requires (like `requires_stealth: true`) and operational secrets that describe *how* to bypass a defense (like `proxy_credentials: "user:pass@host"`). The former belongs in schemas; the latter belongs in the CLI runtime.
+</Note>
+
+### Content addressing
+
+Each schema is hashed (SHA-256 of canonical JSON with sorted keys). The hash becomes the version ID. Pushing the same content twice for the same site is a no-op — the registry recognizes it as a duplicate.
+
+## Verified badge
+
+Schemas are community-contributed and unverified by default. The Hermai team reviews schemas and awards a **verified badge** to those that meet quality standards.
+
+Agents can filter to verified schemas only:
+
+```bash
+# Only verified schemas
+curl "https://api.hermai.ai/v1/schemas?verified=true"
+```
+
+Or include everything (the default):
+
+```bash
+# All schemas, verified and unverified
+curl "https://api.hermai.ai/v1/schemas"
+```
+
+API keys have a **schema access toggle** in the dashboard that controls whether unverified schemas are included in catalog responses for that key.
+
+## Schema versioning
+
+Each push creates a new version. The registry tracks which version is "latest" for each site. When you query the catalog, you get the latest version by default.
+
+Version history is available:
+
+```bash
+curl "https://api.hermai.ai/v1/schemas/allbirds.com/versions"
+```
+
+## Public card vs full package
+
+The registry exposes two views of every schema:
+
+**Public card** (no API key needed) — metadata about *what* the schema does:
+- Site, category, name, description
+- Endpoint names, methods, descriptions
+- Variable names and sources (path/query/body)
+- Query parameter keys and whether they're required
+- Response field names and types (top level only)
+- Capability badges (requires browser, requires session, has auth)
+
+**Full package** (API key + intent required) — everything an agent needs to *execute*:
+- URL templates with actual URLs
+- Header values
+- Body templates
+- Session configuration
+- Variable patterns and defaults
+
+The split is intentional: the card answers "is this useful?", the package answers "how do I run it?"
+
+```bash
+# Public card (no auth)
+curl "https://api.hermai.ai/v1/schemas/allbirds.com"
+
+# Full package (auth + intent required)
+curl -H "Authorization: Bearer hm_sk_..." \
+     -H "X-Hermai-Intent: downloading allbirds schema for a price comparison agent" \
+     "https://api.hermai.ai/v1/schemas/allbirds.com/package"
+```
+
+## Credits for contributions
+
+You earn **+50 credits per site** when you contribute a schema. Credits accumulate and become your starting balance when hosted execution launches in a future phase.

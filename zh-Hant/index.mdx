@@ -1,0 +1,50 @@
+---
+title: "介紹"
+description: "Hermai 是一個由社群驅動、專為 AI agent 打造的 schema registry。"
+---
+
+Hermai 是一個 schema registry,由開發者貢獻網站 API schema,AI agent 則負責使用。把 agent 指向 registry 裡的任何網域,即可取得完整的可呼叫端點清單 — URL、HTTP method、headers、參數 — 一切備妥可直接執行。不用瀏覽器、不用剖析 HTML、不浪費 token。
+
+可以把它想成**網站 API 版本的 HuggingFace**。
+
+## 運作方式
+
+<CardGroup cols={2}>
+  <Card title="用 CLI 貢獻" icon="terminal">
+    使用探索工具組(`hermai detect`、`probe`、`extract`、`intercept`)記錄網站端點,然後執行 `hermai registry push` 將其新增到目錄。
+  </Card>
+  <Card title="從 registry 查詢" icon="magnifying-glass">
+    呼叫 `GET /v1/catalog/{domain}` 取得該網站所有已知端點。平台提供社群貢獻的 schema — 即時、結構化、零探索成本。
+  </Card>
+</CardGroup>
+
+<Tip>
+  **在 AI agent 裡使用?** 透過 `npx skills add hermai-ai/hermai-skills` 安裝 [Hermai skills](https://github.com/hermai-ai/hermai-skills) — Claude Code、Codex、Cursor 以及其他 agent 就會知道如何呼叫 registry 並代替你貢獻 schema。
+</Tip>
+
+## 從這裡開始
+
+<CardGroup cols={2}>
+  <Card title="Quickstart" icon="rocket" href="/zh-Hant/quickstart">
+    註冊、取得 API key,並在兩分鐘內查詢第一份 schema。
+  </Card>
+  <Card title="Hermai 如何運作" icon="wand-magic-sparkles" href="/zh-Hant/concepts/how-hermai-works">
+    心智模型:貢獻者負責探索,agent 負責使用。
+  </Card>
+  <Card title="Schemas" icon="database" href="/zh-Hant/concepts/schemas">
+    什麼是 schema、如何貢獻,以及認證徽章制度。
+  </Card>
+  <Card title="Catalog" icon="compass" href="/zh-Hant/concepts/catalog">
+    agent 在執行期呼叫的查詢 API。
+  </Card>
+  <Card title="Actions" icon="hand-pointer" href="/zh-Hant/concepts/actions">
+    schema 提供的讀取與寫入動作。
+  </Card>
+  <Card title="API keys" icon="key" href="/zh-Hant/concepts/api-keys">
+    驗證請求並管理存取權限。
+  </Card>
+</CardGroup>
+
+## 開源
+
+[hermai-cli](https://github.com/hermai-ai/hermai-cli) 以 AGPL-3.0 授權開源。你可以在本機執行完整的探索引擎,不需要註冊帳號。平台 registry 是建立在上面的社群層 — 瀏覽、搜尋並使用其他人貢獻的 schema。

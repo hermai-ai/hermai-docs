@@ -1,0 +1,79 @@
+---
+title: "Actions"
+description: "schema 提供的读取与写入 action — 你的 agent 能在网站上做什么。"
+---
+
+action 是 agent 在网站上可以执行的单一动作:读取商品目录、将商品加入购物车、搜索列表、提交表单。schema 把 action 与端点并列描述,给你的 agent 一份能力清单。
+
+## Action 类型
+
+| Kind | 做什么 | 示例 |
+|------|-------|------|
+| `api_call` | 调用 JSON API 端点 | Shopify 的 `POST /cart/add.js` |
+| `navigate` | 用 URL 获取页面 | `GET /products/cruiser` |
+| `search` | 搜索网站 | `GET /search?q={query}` |
+| `paginate` | 翻页 | `GET /items?page={page}` |
+| `submit_form` | 提交 HTML 表单 | `POST /contact` |
+
+## 从 catalog 读取 action
+
+调用 `GET /v1/catalog/{domain}` 时,响应会把读取端点与写入 action 放在同一个列表:
+
+```json
+{
+  "endpoints": [
+    {
+      "name": "shopify_products",
+      "method": "GET",
+      "url": "https://www.allbirds.com/products.json",
+      "description": "Product catalog"
+    },
+    {
+      "name": "add_to_cart",
+      "method": "POST",
+      "url": "https://www.allbirds.com/cart/add.js",
+      "headers": { "Content-Type": "application/json" },
+      "kind": "api_call",
+      "description": "Add a product variant to the cart",
+      "params": [
+        { "name": "id", "source": "body", "required": true },
+        { "name": "quantity", "source": "body", "required": true }
+      ]
+    }
+  ]
+}
+```
+
+agent 读取 `method`、`url`、`headers`、`params` 字段,直接构建 HTTP 请求。
+
+## 参数
+
+每个 action 的参数会列出:
+
+| 字段 | 含义 |
+|------|------|
+| `name` | 参数名(例如 `id`、`query`、`page`) |
+| `source` | 参数位置:`body`、`query`、`path` |
+| `required` | 是否必填 |
+
+body 参数用来组成 JSON 对象。query 参数附加到 URL。path 参数则填入 URL 模板中的 `{placeholder}` 片段。
+
+## 执行 action
+
+现阶段没有特别的执行层。你的 agent 直接调用网站:
+
+```bash
+# Read:获取商品目录
+curl "https://www.allbirds.com/products.json"
+
+# Write:加入购物车
+curl -X POST "https://www.allbirds.com/cart/add.js" \
+     -H "Content-Type: application/json" \
+     -d '{"id": 41397031600208, "quantity": 1}'
+```
+
+catalog 提供食谱,agent(或 HTTP client)负责烹饪。
+
+## 贡献 schema 中的 action
+
+[贡献 schema](/zh-Hans/concepts/schemas#contributing-a-schema) 时,可以把 action 和端点一起放进去。写入类 action(加入购物车、提交表单、登录)最容易用 `hermai intercept` 捕获 — 它会启动浏览器,让你在 UI 上执行动作,并记录背后的 XHR 请求供日后重放。

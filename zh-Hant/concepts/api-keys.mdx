@@ -1,0 +1,55 @@
+---
+title: "API keys"
+description: "驗證請求以取得更高速率限制並存取完整 registry。"
+---
+
+## 建立 key
+
+1. 到 [hermai.ai/dashboard](https://hermai.ai/dashboard) 登入
+2. 進入 **API Keys**
+3. 點 **Create key**,給它一個標籤
+4. 複製 key — 只會顯示一次,之後無法取回
+
+Key 長這樣:`hm_sk_abc123...`
+
+## 使用 key
+
+以 Bearer token 形式放在 `Authorization` header:
+
+```bash
+curl -H "Authorization: Bearer hm_sk_abc123..." \
+     -H "X-Hermai-Intent: looking up Shopify endpoints for a shopping agent" \
+     "https://api.hermai.ai/v1/catalog/allbirds.com"
+```
+
+## key 能做什麼
+
+| | 匿名 | 有 API key |
+|---|---|---|
+| 速率限制 | 每小時 5 次 | 每小時 50 次、每天 500 次 |
+| Catalog 查詢 | 可(需 intent) | 可(需 intent) |
+| 瀏覽 registry | 可 | 可 |
+| 推送 schema | 否 | 可 |
+| 下載完整 schema 套件 | 否 | 可 |
+| Dashboard 活動紀錄 | 否 | 可 |
+| 賺取 credits | 否 | 可 |
+
+## Schema 存取開關
+
+每個 API key 有 **schema access** 設定,控制 catalog 回應中是否包含未認證的 schema:
+
+- **僅認證** — catalog 只回傳經 Hermai 團隊審核認證的 schema。最安全選項。
+- **全部 schema**(預設) — 同時包含認證與未認證的社群貢獻。覆蓋更廣,審核較少。
+
+可在 dashboard 的 **API Keys > Schema access** 為每把 key 個別設定。
+
+## 撤銷 key
+
+到 **Dashboard > API Keys**,找到 key 並按 **Revoke**。key 會立即失效。撤銷無法還原 — 若需要請建立新 key。
+
+## 安全
+
+- Key 用於驗證請求,不用來做請求簽章 — 單純的 Bearer token 驗證。
+- 安全保管 key,不要提交到版控。
+- 每把 key 可獨立撤銷,可在不影響其他 key 的情況下輪替。
+- Key 在伺服器端以 hash 儲存 — 遺失無法復原。

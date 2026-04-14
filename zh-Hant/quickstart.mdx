@@ -1,0 +1,120 @@
+---
+title: "Quickstart"
+description: "註冊、取得 API key,並在兩分鐘內查詢第一份 schema。"
+---
+
+## 1. 註冊
+
+到 [hermai.ai/register](https://hermai.ai/register) 建立免費帳號。不需要信用卡 — registry 完全免費使用。
+
+## 2. 建立 API key
+
+進入 **Dashboard > API Keys** 並建立新的 key。複製它 — 在需要驗證的請求中會用到。
+
+```
+hm_sk_abc123...
+```
+
+匿名請求也可以用(每小時 5 次),但 API key 提供每小時 50 次、每天 500 次的額度。
+
+## 3. 查詢 catalog
+
+查詢某個網域的所有已知端點:
+
+```bash
+curl -H "Authorization: Bearer hm_sk_abc123..." \
+     -H "X-Hermai-Intent: looking up product endpoints on allbirds.com to build a price comparison agent" \
+     "https://api.hermai.ai/v1/catalog/allbirds.com"
+```
+
+回應包含社群發現的每一個端點與 action:
+
+```json
+{
+  "domain": "allbirds.com",
+  "endpoints": [
+    {
+      "name": "shopify_products",
+      "method": "GET",
+      "url": "https://www.allbirds.com/products.json",
+      "description": "Shopify store product catalog"
+    },
+    {
+      "name": "add_to_cart",
+      "method": "POST",
+      "url": "https://www.allbirds.com/cart/add.js",
+      "headers": { "Content-Type": "application/json" },
+      "kind": "api_call",
+      "params": [
+        { "name": "id", "source": "body", "required": true },
+        { "name": "quantity", "source": "body", "required": true }
+      ]
+    }
+  ]
+}
+```
+
+## 4. 直接呼叫端點
+
+用 catalog 回應裡的 URL、method、headers 自行呼叫網站:
+
+```bash
+curl -X POST "https://www.allbirds.com/cart/add.js" \
+     -H "Content-Type: application/json" \
+     -d '{"id": 41397031600208, "quantity": 1}'
+```
+
+就這樣。不用瀏覽器、不用 proxy、Hermai 也不在請求路徑上。你查詢了 schema,然後直接呼叫網站。
+
+## 5. 瀏覽 registry
+
+在 [hermai.ai/schemas](https://hermai.ai/schemas) 瀏覽,或透過 API:
+
+```bash
+# 列出所有 schema
+curl "https://api.hermai.ai/v1/schemas"
+
+# 依分類篩選
+curl "https://api.hermai.ai/v1/schemas?category=commerce"
+
+# 僅顯示已認證的 schema
+curl "https://api.hermai.ai/v1/schemas?verified=true"
+
+# 瀏覽 intent 分類樹
+curl "https://api.hermai.ai/v1/categories"
+```
+
+## 6. 貢獻 schema
+
+發現缺少的網站?用 CLI 記錄其端點並推送 schema:
+
+```bash
+# 安裝 CLI
+go install github.com/hermai-ai/hermai-cli/cmd/hermai@latest
+
+# 分類網站並找出公開路徑
+hermai detect https://example.com
+hermai wellknown example.com
+
+# 從詳細頁面擷取內嵌資料
+hermai probe --body https://example.com/products/123 | hermai extract
+
+# 捕獲動態頁面的 XHR 流量(搜尋、購物車等)
+hermai intercept https://example.com/search?q=test
+
+# 撰寫 schema.json(參見 /zh-Hant/concepts/schemas),然後推送
+hermai registry push schema.json
+```
+
+<Tip>
+  **使用 Claude Code、Codex 或 Cursor?** 執行 `npx skills add hermai-ai/hermai-skills`,你的 agent 就會代替你完成探索與推送。詳情參見 [hermai-skills repo](https://github.com/hermai-ai/hermai-skills)。
+</Tip>
+
+每貢獻一個網站可獲得 **+50 credits**。當託管執行上線時,credits 會成為你的起始餘額。
+
+## 下一步
+
+- [Hermai 如何運作](/zh-Hant/concepts/how-hermai-works) — 心智模型
+- [Schemas](/zh-Hant/concepts/schemas) — 格式、認證、貢獻方式
+- [Catalog](/zh-Hant/concepts/catalog) — 查詢 API 細節
+- [API keys](/zh-Hant/concepts/api-keys) — 範圍與速率限制

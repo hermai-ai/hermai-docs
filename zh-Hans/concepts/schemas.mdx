@@ -1,0 +1,358 @@
+---
+title: "Schemas"
+description: "什么是 schema、如何贡献,以及认证徽章制度。"
+---
+
+schema 是一份 JSON 文档,描述如何与一个网站对话。它列出网站提供的每个端点和 action — URL、HTTP method、必需 headers、参数、以及响应格式。一旦某个网站有了 schema,任何 agent 都能直接查询并调用端点,无需重新发现。
+
+## schema 包含什么
+
+一个 Shopify 网站的 schema 可能包含:
+
+| Endpoint | Method | URL | 功能 |
+|----------|--------|-----|------|
+| `shopify_products` | GET | `/products.json` | 列出商品目录 |
+| `shopify_product` | GET | `/products/{handle}.json` | 获取单个商品 |
+| `add_to_cart` | POST | `/cart/add.js` | 将变体加入购物车 |
+| `get_cart` | GET | `/cart.js` | 获取当前购物车内容 |
+
+每个端点都带有参数、必需 headers(如 `Content-Type: application/json`)以及足够让 agent 构建有效 HTTP 请求的元数据。
+
+## Schema 格式
+
+Schema 是 JSON 文档。以下是最小示例:
+
+```json
+{
+  "site": "allbirds.com",
+  "intent_category": "commerce",
+  "schema_format_version": "0.1",
+  "name": "allbirds-products",
+  "description": "Shopify-based product catalog and cart API for allbirds.com",
+  "endpoints": [
+    {
+      "name": "shopify_products",
+      "method": "GET",
+      "url_template": "https://www.allbirds.com/products.json",
+      "description": "Public product catalog from the Shopify AJAX API",
+      "headers": {},
+      "response_schema": {
+        "type": "object",
+        "fields": [
+          { "name": "products", "type": "array" }
+        ]
+      }
+    }
+  ],
+  "actions": [
+    {
+      "name": "add_to_cart",
+      "method": "POST",
+      "url_template": "https://www.allbirds.com/cart/add.js",
+      "description": "Add a product variant to the shopping cart",
+      "kind": "api_call",
+      "transport": "api_call",
+      "headers": { "Content-Type": "application/json" },
+      "params": [
+        { "name": "id", "in": "body", "type": "integer", "required": true, "description": "Product variant ID" },
+        { "name": "quantity", "in": "body", "type": "integer", "required": true, "description": "Quantity to add" }
+      ],
+      "confidence": 0.98,
+      "source": "shopify_ajax_api"
+    }
+  ]
+}
+```
+
+### 必填字段
+
+| 字段 | 类型 | 说明 |
+|------|------|------|
+| `site` | string | schema 涵盖的域名(例如 `allbirds.com`),统一小写。 |
+| `intent_category` | string | 须对应 [intent 分类](/zh-Hans/concepts/catalog#intent-taxonomy)(例如 `commerce`、`travel`、`jobs`)。 |
+| `schema_format_version` | string | 目前必须为 `"0.1"`。若省略则默认为 `"0.1"`。 |
+
+### 选填字段
+
+| 字段 | 类型 | 说明 |
+|------|------|------|
+| `name` | string | schema 的可读名称 |
+| `description` | string | schema 的用途说明 |
+| `version` | number | schema 版本号(仅供参考) |
+| `endpoints` | array | 读取类型的 API 端点(返回数据的 GET 请求) |
+| `actions` | array | 写入或交互类型的 action(POST、购物车操作等) |
+| `requires_stealth` | boolean | 网站是否需要 TLS 指纹伪装以避开 bot 检测 |
+| `session` | object | Session 启动配置(API 调用前需要的 cookies 或 headers) |
+
+### 能力徽章
+
+registry 会把能力信号以徽章形式呈现,让 agent 知道请求需要什么:
+
+| 徽章 | 来源字段 | 含义 |
+|------|---------|------|
+| **需要浏览器** | `requires_stealth: true` | 网站需要类 Chrome 的 TLS 指纹。agent 应使用 stealth HTTP client 或 CLI 的 `--stealth` 标志。 |
+| **需要 session** | 存在 `session` 对象 | 网站在 API 调用前需要启动 cookies 或 headers(例如 Cloudflare 保护站点的 clearance cookies)。 |
+| **需要验证** | `headers` 含有 `Authorization` 或 `X-API-*` | 端点需要验证 header。 |
+
+这些徽章会显示在公开 schema 卡片上,让 agent 在下载完整 schema 前就能判断能否处理该网站。
+
+## 贡献 schema
+
+任何有 API key 的人都可以推送 schema。共有三条路径:
+
+### 选项 1:使用 CLI 工具组发现
+
+```bash
+# 安装 CLI
+go install github.com/hermai-ai/hermai-cli/cmd/hermai@latest
+
+# 分类网站并探测标准路径
+hermai detect https://example.com
+hermai wellknown example.com
+
+# 从详情页面提取嵌入数据 — 可识别 13 种模式,
+# 包含 __NEXT_DATA__、JSON-LD、ytInitialData、__APOLLO_STATE__ 等。
+hermai probe --body https://example.com/products/123 | hermai extract
+
+# 动态页面(搜索、购物车、筛选)需要捕获真实 XHR
+hermai intercept https://example.com/search?q=test
+
+# 若发现 GraphQL 端点,可做 introspection
+hermai introspect https://example.com/graphql
+
+# 根据确认的端点编写 schema.json,然后推送
+hermai registry push schema.json
+```
+
+每个子命令都输出 JSON,可直接传给下一步处理 — 不需要 LLM key。
+
+### 选项 2:让你的 agent 代劳
+
+```bash
+npx skills add hermai-ai/hermai-skills
+```
+
+Claude Code、Codex、Cursor 以及其他支持 [Vercel skills CLI](https://github.com/vercel-labs/skills) 的 agent 会加载 `hermai-contribute` skill,并能自主执行发现与推送流程。详见 [hermai-ai/hermai-skills](https://github.com/hermai-ai/hermai-skills)。
+
+### 选项 3:手动编写并推送
+
+若你已经了解网站的 API(从 DevTools、文档或测试),可以自己编写 schema JSON 并通过 API 推送:
+
+```bash
+curl -X POST "https://api.hermai.ai/v1/schemas" \
+     -H "Authorization: Bearer hm_sk_..." \
+     -H "Content-Type: application/json" \
+     -d '{
+  "site": "allbirds.com",
+  "intent_category": "commerce",
+  "schema_format_version": "0.1",
+  "name": "allbirds-shopify",
+  "description": "Shopify AJAX API for allbirds.com — product catalog and cart",
+  "endpoints": [
+    {
+      "name": "shopify_products",
+      "method": "GET",
+      "url_template": "https://www.allbirds.com/products.json",
+      "description": "Public product catalog",
+      "headers": {},
+      "response_schema": {
+        "type": "object",
+        "fields": [
+          { "name": "products", "type": "array" }
+        ]
+      }
+    },
+    {
+      "name": "shopify_product",
+      "method": "GET",
+      "url_template": "https://www.allbirds.com/products/{handle}.json",
+      "description": "Single product detail by handle",
+      "variables": [
+        { "name": "handle", "source": "path" }
+      ]
+    }
+  ],
+  "actions": [
+    {
+      "name": "add_to_cart",
+      "method": "POST",
+      "url_template": "https://www.allbirds.com/cart/add.js",
+      "description": "Add a product variant to the shopping cart",
+      "kind": "api_call",
+      "transport": "api_call",
+      "headers": { "Content-Type": "application/json" },
+      "params": [
+        { "name": "id", "in": "body", "type": "integer", "required": true, "description": "Product variant ID" },
+        { "name": "quantity", "in": "body", "type": "integer", "required": true, "default": "1", "description": "Quantity to add" }
+      ],
+      "confidence": 0.98,
+      "source": "manual"
+    },
+    {
+      "name": "get_cart",
+      "method": "GET",
+      "url_template": "https://www.allbirds.com/cart.js",
+      "description": "Get current cart contents",
+      "kind": "api_call",
+      "transport": "api_call",
+      "headers": {},
+      "confidence": 0.98,
+      "source": "manual"
+    },
+    {
+      "name": "update_cart",
+      "method": "POST",
+      "url_template": "https://www.allbirds.com/cart/update.js",
+      "description": "Update item quantities by variant ID. Pass {variant_id: new_qty} for each line. Setting qty=0 removes the item.",
+      "kind": "api_call",
+      "transport": "api_call",
+      "headers": { "Content-Type": "application/json" },
+      "params": [
+        { "name": "updates", "in": "body", "type": "object", "required": true, "description": "Map of variant ID to quantity, e.g. {\"41397031600208\": 2}" }
+      ],
+      "confidence": 0.98,
+      "source": "manual"
+    }
+  ]
+}'
+```
+
+推送成功会返回版本 hash 与网站:
+
+```json
+{
+  "success": true,
+  "data": {
+    "version_hash": "9a0a27c4085fc661...",
+    "site": "allbirds.com",
+    "created": true
+  }
+}
+```
+
+若校验失败,会得到特定错误码:
+
+```json
+{
+  "success": false,
+  "error": {
+    "code": "UNKNOWN_CATEGORY",
+    "message": "intent_category does not exist in current taxonomy"
+  }
+}
+```
+
+<Tip>
+  **从最小开始。** 你不需要一次对应每个端点 — 即便只有一个有用的端点,也是合格的贡献。其他贡献者可以后续推送覆盖更广的新版本。
+</Tip>
+
+Schema 会立即上线 — 没有审核队列。
+
+### 校验规则
+
+每次推送都会经过校验。任一检查失败即拒绝,并返回对应错误码。
+
+**结构检查:**
+
+| 规则 | 错误码 | 说明 |
+|------|-------|------|
+| JSON 合法 | `INVALID_JSON` | body 必须是可解析的 JSON |
+| 含 `site` | `MISSING_FIELD` | 必填字段 |
+| 含 `intent_category` | `MISSING_FIELD` | 必填字段 |
+| 分类存在 | `UNKNOWN_CATEGORY` | `intent_category` 必须对应[分类树](/zh-Hans/concepts/catalog#intent-taxonomy)中的 slug。调用 `GET /v1/categories` 可查看有效值。 |
+| 格式版本 | `UNSUPPORTED_FORMAT` | `schema_format_version` 必须为 `"0.1"` |
+
+**内容治理:**
+
+| 规则 | 错误码 | 说明 |
+|------|-------|------|
+| 禁用名称 | `FORBIDDEN_NAME` | schema 名称不可描述绕过技术。被拒绝的模式:`bypass`、`circumvent`、`cf-clearance`、`anti-bot`、`rotate-ip`。命名应反映功能(例如 `shopify-products`),而非如何攻破防御。 |
+| 禁用字段 | `FORBIDDEN_FIELD` | schema 在任何深度都不能包含凭证或运营机密字段。详见下方[禁用字段列表](#forbidden-fields)。 |
+| 排除列表 | `SITE_EXCLUDED` | 部分网站要求从 registry 移除。对排除网站推送 schema 会被拒绝。 |
+
+### 禁用字段
+
+以下 JSON key 若在 schema 的任何深度出现都会被拒绝:
+
+| 字段 | 为何禁用 |
+|------|---------|
+| `proxy_credentials` | 实际 proxy 登录凭证 — 绝不可公开的机密 |
+| `residential_proxy` | Proxy 基础设施配置 — 属于运营而非 schema 数据 |
+| `clearance_cookie_js` | 用于生成 clearance cookies 的 JavaScript — 军备竞赛式的实现细节 |
+| `clearance_cookies` | 短暂的 session cookies — 网站特定且时效有限,对其他用户无意义 |
+| `bypass_method` | 描述绕过技术 — 违反命名政策 |
+| `stealth_script` | 自定义的反检测 JavaScript — 属于运营而非 schema 数据 |
+| `tls_fingerprint` | 特定的 TLS profile 标识 — 变动频繁,由 CLI 运行时管理更合适,不应写入 schema |
+
+<Note>
+  **能力信号是被允许的。** 区别在于:告诉 agent 网站*需要什么*的元数据(例如 `requires_stealth: true`)是可以的;描述*如何*绕过防御的运营机密(例如 `proxy_credentials: "user:pass@host"`)则不可。前者属于 schema,后者属于 CLI 运行时。
+</Note>
+
+### 内容寻址
+
+每份 schema 都会被哈希(以排序 key 的规范 JSON 生成 SHA-256)。hash 即版本 ID。对同一网站重复推送相同内容等同空操作 — registry 会识别为重复。
+
+## 认证徽章
+
+schema 默认为社区贡献且未认证。Hermai 团队会审核 schema 并授予**认证徽章**给达到质量标准的项目。
+
+agent 可以只筛选已认证的 schema:
+
+```bash
+# 只取已认证
+curl "https://api.hermai.ai/v1/schemas?verified=true"
+```
+
+或全部都取(默认行为):
+
+```bash
+# 包含认证与未认证
+curl "https://api.hermai.ai/v1/schemas"
+```
+
+每个 API key 在 dashboard 都有一个 **schema access 开关**,控制该 key 在 catalog 响应中是否包含未认证的 schema。
+
+## Schema 版本
+
+每次推送会生成新版本。registry 会为每个网站追踪"最新"版本。查询 catalog 时默认取得最新版。
+
+可获取版本历史:
+
+```bash
+curl "https://api.hermai.ai/v1/schemas/allbirds.com/versions"
+```
+
+## 公开卡片 vs 完整套件
+
+registry 对每份 schema 提供两种视图:
+
+**公开卡片**(不需 API key)— 描述 schema *做什么*的元数据:
+- Site、分类、名称、说明
+- 端点名称、method、描述
+- 变量名称与来源(path/query/body)
+- Query 参数 key 与是否必填
+- 响应字段名称与类型(仅顶层)
+- 能力徽章(需要浏览器、需要 session、需要验证)
+
+**完整套件**(需 API key + intent)— agent *执行*所需的一切:
+- 完整 URL 模板
+- Headers 值
+- Body 模板
+- Session 配置
+- 变量模式与默认值
+
+分流是刻意的:卡片回答"这有用吗?",套件回答"该怎么执行?"
+
+```bash
+# 公开卡片(无需验证)
+curl "https://api.hermai.ai/v1/schemas/allbirds.com"
+
+# 完整套件(需验证 + intent)
+curl -H "Authorization: Bearer hm_sk_..." \
+     -H "X-Hermai-Intent: downloading allbirds schema for a price comparison agent" \
+     "https://api.hermai.ai/v1/schemas/allbirds.com/package"
+```
+
+## 贡献的 credits
+
+每贡献一个网站可获得 **+50 credits**。Credits 会累积,并在托管执行上线时成为你的起始余额。

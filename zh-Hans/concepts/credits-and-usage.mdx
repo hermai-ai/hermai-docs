@@ -1,0 +1,59 @@
+---
+title: "Credits 与用量"
+description: "速率限制、credits,以及当前版本的用量机制。"
+---
+
+## 速率限制
+
+所有 API 请求都有速率限制。限制取决于是否已验证:
+
+| 层级 | 每小时 | 每天 | 身份跟踪方式 |
+|------|-------|------|------------|
+| 匿名(无 API key) | 5 | — | 按 IP 地址 |
+| 已注册(免费) | 50 | 500 | 按用户账号 |
+
+超过限制会收到 `429 Too Many Requests`。每个响应的 `X-Rate-Limit-Remaining` header 会告诉 agent 当前窗口还剩多少次请求。
+
+获取 API key 免费 — 到 [hermai.ai/register](https://hermai.ai/register) 注册并在 dashboard 创建。
+
+## Credits
+
+Credits 通过贡献与社区活动赚取:
+
+| 行为 | Credits |
+|------|---------|
+| 第一次发起请求 | +50 |
+| 在 GitHub 上 star [hermai-cli](https://github.com/hermai-ai/hermai-cli) | +100 |
+| 推荐朋友 | 每位受邀 +100 |
+| 贡献 schema | 每个网站 +50 |
+
+Credits 会累积在账号中,**当托管执行上线时会成为你的起始余额**。在当前版本没有计费 — 只要在上方速率限制内,所有访问都免费。
+
+## 哪些算一次请求?
+
+以下端点每次调用都计入速率限制:
+
+- `GET /v1/catalog/{domain}`(catalog 查询)
+- `GET /v1/schemas/{site}/package`(schema 下载)
+
+以下**不**计入速率限制:
+
+- `GET /v1/schemas`(浏览/搜索 registry)
+- `GET /v1/schemas/{site}`(公开 schema 卡片)
+- `GET /v1/trending`、`GET /v1/categories`(探索接口)
+- `POST /v1/schemas`(推送 schema)
+- `GET /v1/health`
+
+## 用量 dashboard
+
+你的 [dashboard](https://hermai.ai/dashboard) 会显示:
+
+- **今日请求数** — 累计调用次数
+- **Schema 命中率** — 查询命中已缓存 schema 的比例
+- **平均延迟** — 请求的平均响应时间
+- **已获得 credits** — 累计的 credits 余额
+- **活动记录** — 每条请求的 URL、状态、延迟、时间戳
+
+## 当前版本没有计费
+
+没有付费方案、没有发票、不需要信用卡。速率限制是唯一的关卡。当托管执行上线时,credits 会转换为可用余额供 proxy 请求使用 — 早期累积 credits 的贡献者会有领先优势。

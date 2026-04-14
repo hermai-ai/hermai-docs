@@ -9,23 +9,75 @@
   },
   "favicon": "/favicon.svg",
   "navigation": {
-    "groups": [
+    "languages": [
       {
-        "group": "Getting started",
-        "pages": [
-          "index",
-          "quickstart"
+        "language": "en",
+        "default": true,
+        "groups": [
+          {
+            "group": "Getting started",
+            "pages": [
+              "index",
+              "quickstart"
+            ]
+          },
+          {
+            "group": "Core concepts",
+            "pages": [
+              "concepts/how-hermai-works",
+              "concepts/schemas",
+              "concepts/catalog",
+              "concepts/actions",
+              "concepts/credits-and-usage",
+              "concepts/api-keys"
+            ]
+          }
         ]
       },
       {
-        "group": "Core concepts",
-        "pages": [
-          "concepts/how-hermai-works",
-          "concepts/schemas",
-          "concepts/catalog",
-          "concepts/actions",
-          "concepts/credits-and-usage",
-          "concepts/api-keys"
+        "language": "zh-Hant",
+        "groups": [
+          {
+            "group": "開始使用",
+            "pages": [
+              "zh-Hant/index",
+              "zh-Hant/quickstart"
+            ]
+          },
+          {
+            "group": "核心概念",
+            "pages": [
+              "zh-Hant/concepts/how-hermai-works",
+              "zh-Hant/concepts/schemas",
+              "zh-Hant/concepts/catalog",
+              "zh-Hant/concepts/actions",
+              "zh-Hant/concepts/credits-and-usage",
+              "zh-Hant/concepts/api-keys"
+            ]
+          }
+        ]
+      },
+      {
+        "language": "zh-Hans",
+        "groups": [
+          {
+            "group": "开始使用",
+            "pages": [
+              "zh-Hans/index",
+              "zh-Hans/quickstart"
+            ]
+          },
+          {
+            "group": "核心概念",
+            "pages": [
+              "zh-Hans/concepts/how-hermai-works",
+              "zh-Hans/concepts/schemas",
+              "zh-Hans/concepts/catalog",
+              "zh-Hans/concepts/actions",
+              "zh-Hans/concepts/credits-and-usage",
+              "zh-Hans/concepts/api-keys"
+            ]
+          }
         ]
       }
     ],

@@ -1,0 +1,116 @@
+---
+title: "Catalog"
+description: "agent 在运行时调用的查询 API,用来获取任何域名的端点。"
+---
+
+catalog 是 agent 使用的查询端点。给它一个域名,就能拿到社区为该站点发现的每一个可调用端点与 action。
+
+## 基本用法
+
+```bash
+curl -H "Authorization: Bearer hm_sk_..." \
+     -H "X-Hermai-Intent: comparing prices on allbirds.com for a shopping agent" \
+     "https://api.hermai.ai/v1/catalog/allbirds.com"
+```
+
+响应:
+
+```json
+{
+  "domain": "allbirds.com",
+  "session_id": "abc123...",
+  "endpoints": [
+    {
+      "name": "shopify_products",
+      "method": "GET",
+      "url": "https://www.allbirds.com/products.json",
+      "description": "Shopify store product catalog",
+      "params": []
+    },
+    {
+      "name": "add_to_cart",
+      "method": "POST",
+      "url": "https://www.allbirds.com/cart/add.js",
+      "headers": { "Content-Type": "application/json" },
+      "kind": "api_call",
+      "description": "Add a product variant to the cart",
+      "params": [
+        { "name": "id", "source": "body", "required": true },
+        { "name": "quantity", "source": "body", "required": true }
+      ]
+    }
+  ]
+}
+```
+
+每个端点都包含 agent 构建有效 HTTP 请求所需的一切:URL 模板、method、headers、参数。
+
+## Intent
+
+每个 catalog 请求都必须附上 **intent** — 以自然语言说明 agent 为什么需要这份 schema。可用 query 参数或 header 传递:
+
+```bash
+# Query 参数
+GET /v1/catalog/allbirds.com?intent=looking+up+product+prices+for+a+comparison+agent
+
+# Header(适合较长的 intent)
+X-Hermai-Intent: looking up product prices for a comparison agent
+```
+
+**要求**:至少 20 个字符,至少 5 个不同单词。没有有效 intent 的请求会返回 `400 INTENT_REQUIRED`。
+
+**为什么要求它**:intent 数据决定我们优先认证哪些 schema、帮助把 agent 对应到合适的端点,并作为轻量的反垃圾闸门。
+
+## Intent 分类
+
+registry 中的每份 schema 都声明一个来自固定分类树的 `intent_category`。完整分类树位于:
+
+```bash
+curl "https://api.hermai.ai/v1/categories"
+```
+
+顶层分类包含:`commerce`、`travel`、`jobs`、`social`、`media`、`reference` 等。每个都有子分类(例如 `commerce` → `product-detail`、`product-search`、`reviews`)。
+
+## 速率限制
+
+| 层级 | 每小时 | 每天 |
+|------|-------|------|
+| 匿名(无 API key) | 5 | — |
+| 已注册(免费) | 50 | 500 |
+
+匿名请求按 IP 限流,已注册请求按账号限流。响应含 `X-Rate-Limit-Remaining` header,agent 可据此调整节奏。
+
+## 浏览 registry
+
+除了 catalog 查询,你也可以浏览整个 registry:
+
+```bash
+# 列出所有 schema(分页)
+GET /v1/schemas
+
+# 按分类筛选
+GET /v1/schemas?category=commerce
+
+# 按网站名称搜索
+GET /v1/schemas?q=shopify
+
+# 按 trending 或最近认证排序
+GET /v1/schemas?sort=trending
+
+# 仅显示已认证
+GET /v1/schemas?verified=true
+
+# 获取指定网站最新的 schema 卡片
+GET /v1/schemas/allbirds.com
+
+# 版本历史
+GET /v1/schemas/allbirds.com/versions
+```
+
+这些浏览端点**不需要** intent — 它们是探索用的接口,并非 agent 运行时的调用。
+
+## 托管执行呢?
+
+目前 agent 会用 catalog 响应里的 URL 直接调用上游网站。Hermai 不在请求路径上。
+
+托管执行 — 即 Hermai 用自家基础设施代理请求,处理 anti-bot、住宅 proxy、session 管理 — 将在未来阶段推出。[加入 waitlist](https://hermai.ai/waitlist) 表达兴趣并协助我们建立定价模型。

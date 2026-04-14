@@ -5,7 +5,7 @@ description: "Sign up, get an API key, and query your first schema in 2 minutes.
 
 ## 1. Sign up
 
-Create a free account at [hermai.ai/register](https://hermai.ai/register). No credit card required — Phase 1 is fully free.
+Create a free account at [hermai.ai/register](https://hermai.ai/register). No credit card required — the registry is fully free to use.
 
 ## 2. Create an API key
 
@@ -86,20 +86,31 @@ curl "https://api.hermai.ai/v1/categories"
 
 ## 6. Contribute a schema
 
-Discovered something useful? Push it to the registry so other agents can benefit:
+Found a site that's missing? Document its endpoints with the CLI and push the schema:
 
 ```bash
 # Install the CLI
 go install github.com/hermai-ai/hermai-cli/cmd/hermai@latest
 
-# Discover endpoints for a site (runs locally, may take 1-2 minutes)
-hermai discover https://example.com
+# Classify the site + find its public paths
+hermai detect https://example.com
+hermai wellknown example.com
 
-# Push to the registry
+# Pull embedded data from a detail page
+hermai probe --body https://example.com/products/123 | hermai extract
+
+# Capture XHR traffic for dynamic pages (search, cart, etc.)
+hermai intercept https://example.com/search?q=test
+
+# Author schema.json (see /concepts/schemas), then push
 hermai registry push schema.json
 ```
 
-You earn **+50 credits per site** for contributions. Credits become your starting balance when hosted execution launches in Phase 2.
+<Tip>
+  **Using Claude Code, Codex, or Cursor?** Run `npx skills add hermai-ai/hermai-skills` and your agent will do the discovery and push for you. See the [hermai-skills repo](https://github.com/hermai-ai/hermai-skills) for details.
+</Tip>
+
+You earn **+50 credits per site** for contributions. Credits become your starting balance when hosted execution launches.
 
 ## Next steps
 

@@ -76,4 +76,4 @@ The catalog gives you the recipe. Your agent (or HTTP client) executes it.
 
 ## Actions in contributed schemas
 
-When you [contribute a schema](/concepts/schemas#contributing-a-schema), you can include actions alongside endpoints. Site-specific probes in the CLI (like the Shopify probe) automatically generate both read endpoints and write actions — no manual work needed for supported site types.
+When you [contribute a schema](/concepts/schemas#contributing-a-schema), you can include actions alongside endpoints. Write actions (add-to-cart, submit form, login) are easiest to capture with `hermai intercept`, which launches a browser, lets you perform the action in the UI, and records the underlying XHR request for replay.

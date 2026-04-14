@@ -7,16 +7,14 @@ description: "Contributors discover, agents consume. The mental model in two min
 
 Hermai has two sides:
 
-1. **The CLI** ([hermai-cli](https://github.com/hermai-ai/hermai-cli), open source) — runs on your machine. It discovers website API endpoints by probing URLs, watching browser traffic, and asking an LLM to generalize what it finds into a reusable schema. This is the expensive step: it may launch a headless browser and take 10-60 seconds per site.
+1. **The CLI** ([hermai-cli](https://github.com/hermai-ai/hermai-cli), open source) — runs on your machine. Contributors use it to inspect a site and compose a schema describing its endpoints, then push the schema to the registry.
 
-2. **The platform** (api.hermai.ai) — a schema registry. It stores and serves the schemas that CLI users have discovered and pushed. Agents query it at runtime to get instant, structured endpoint data for any domain in the registry. No browser, no discovery cost, sub-200ms.
+2. **The platform** (api.hermai.ai) — a schema registry. It stores and serves the schemas that contributors have pushed. Agents query it at runtime to get instant, structured endpoint data for any domain in the registry. No browser, no discovery cost, sub-200ms.
 
 ```
-Developer                          Platform                         Agent
+Contributor                        Platform                         Agent
     │                                  │                               │
-    │  hermai discover <url>           │                               │
-    │  (runs engine locally)           │                               │
-    │──────────────────────────────>   │                               │
+    │  discovery toolkit (local)       │                               │
     │  hermai registry push            │                               │
     │──────────────────────────────>   │                               │
     │                                  │   GET /v1/catalog/{domain}    │
@@ -30,13 +28,16 @@ Developer                          Platform                         Agent
 
 ## What the CLI does
 
-The CLI walks a cheapest-path-first pipeline:
+The CLI ships a deterministic toolkit — each subcommand does one thing and emits JSON the next step can consume:
 
-1. **Probe** — try the obvious things: `/products.json`, `__NEXT_DATA__`, JSON-LD, known API patterns. Most sites resolve here in under 2 seconds with no browser.
-2. **HTML extraction** — if the probe found HTML instead of JSON, extract structured content from forms, links, and page metadata.
-3. **Browser + LLM** — last resort. Launch a headless Chromium, capture all network traffic, and ask an LLM to generalize the discovered endpoints into a reusable schema.
+- **`hermai detect`** — classify the site's platform (Shopify, WordPress, Next.js, etc.) and detect anti-bot systems.
+- **`hermai wellknown`** — probe `robots.txt`, sitemaps, RSS feeds, and GraphQL endpoints.
+- **`hermai probe --body | hermai extract`** — pull embedded data from a page. Recognises 13 SSR/hydration patterns (`__NEXT_DATA__`, `ytInitialData`, `__APOLLO_STATE__`, `SIGI_STATE`, and more).
+- **`hermai intercept`** — launch a browser and capture real XHR traffic, useful for dynamic features (search, cart, filters).
+- **`hermai introspect`** — fetch a GraphQL schema.
+- **`hermai session bootstrap`** — warm a browser session for anti-bot sites.
 
-The output is a **schema** — a JSON file describing every endpoint and action the site exposes. This schema gets cached locally and can be pushed to the registry.
+The contributor composes a schema JSON file from what they find and pushes it with `hermai registry push`. No LLM key or managed service is required.
 
 ## What the platform does
 

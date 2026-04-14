@@ -100,20 +100,41 @@ These badges appear on the public schema card so agents can decide whether they 
 
 Anyone with an API key can push a schema. There are two paths:
 
-### Option 1: Use the CLI to discover and push
+### Option 1: Discover with the CLI toolkit
 
 ```bash
 # Install the CLI
 go install github.com/hermai-ai/hermai-cli/cmd/hermai@latest
 
-# Discover endpoints (runs the engine locally)
-hermai discover https://example.com
+# Classify the site and probe standard paths
+hermai detect https://example.com
+hermai wellknown example.com
 
-# Push to the registry
+# Extract embedded data from a detail page — recognises 13 patterns
+# including __NEXT_DATA__, JSON-LD, ytInitialData, __APOLLO_STATE__, etc.
+hermai probe --body https://example.com/products/123 | hermai extract
+
+# For dynamic pages (search, cart, filters) capture real XHR traffic
+hermai intercept https://example.com/search?q=test
+
+# Introspect GraphQL endpoints if you find one
+hermai introspect https://example.com/graphql
+
+# Write schema.json with the endpoints you confirmed, then push
 hermai registry push schema.json
 ```
 
-The CLI handles the schema format automatically — you don't need to write JSON by hand.
+Each subcommand emits JSON that the next step can consume — no LLM key needed.
+
+### Option 2: Let your agent do it
+
+```bash
+npx skills add hermai-ai/hermai-skills
+```
+
+Claude Code, Codex, Cursor, and other agents with the [Vercel skills CLI](https://github.com/vercel-labs/skills) pick up the `hermai-contribute` skill and can run the discovery + push workflow autonomously. See [hermai-ai/hermai-skills](https://github.com/hermai-ai/hermai-skills).
+
+### Option 3: Write and push manually
 
 ### Option 2: Write and push manually
 

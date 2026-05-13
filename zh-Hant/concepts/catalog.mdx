@@ -111,6 +111,23 @@ GET /v1/schemas/allbirds.com/versions
 
 ## 託管執行呢?
 
-目前 agent 會用 catalog 回應裡的 URL 直接呼叫上游網站。Hermai 不在請求路徑上。
+Agent 可以選擇用 catalog 回應裡的資料直接呼叫上游網站,或者把呼叫交給 Hermai 透過 [cloud fetch](/zh-Hant/concepts/cloud-fetch) 代為執行:
 
-託管執行 — 也就是 Hermai 以自家基礎設施代理請求,處理 anti-bot、住宅 proxy、session 管理 — 將在未來階段推出。[加入 waitlist](https://hermai.ai/waitlist) 表達興趣並協助我們建立定價模型。
+```bash
+# 直接:agent 自己呼叫網站(免費,Hermai 不在路徑上)
+curl "https://www.allbirds.com/products.json"
+
+# Cloud fetch 用 URL:Hermai 替你呼叫(1 credit,回投射過的 JSON)
+curl -X POST https://api.hermai.ai/v1/fetch \
+  -H "Authorization: Bearer hm_sk_…" \
+  -H "Content-Type: application/json" \
+  -d '{"url": "https://www.allbirds.com/products.json"}'
+
+# Cloud fetch 用名稱:anti-bot 網站必須用這條(x.com、booking 等)
+curl -X POST https://fetch.hermai.ai/v1/fetch \
+  -H "Authorization: Bearer hm_sk_…" \
+  -H "Content-Type: application/json" \
+  -d '{"site":"x.com","endpoint":"user_profile","params":{…}}'
+```
+
+Catalog 免費;Cloud fetch 每次成功扣 1 credit。完整參考見 [Cloud fetch](/zh-Hant/concepts/cloud-fetch)。

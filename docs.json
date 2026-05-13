@@ -27,6 +27,7 @@
               "concepts/how-hermai-works",
               "concepts/schemas",
               "concepts/catalog",
+              "concepts/cloud-fetch",
               "concepts/actions",
               "concepts/credits-and-usage",
               "concepts/api-keys"
@@ -50,6 +51,7 @@
               "zh-Hant/concepts/how-hermai-works",
               "zh-Hant/concepts/schemas",
               "zh-Hant/concepts/catalog",
+              "zh-Hant/concepts/cloud-fetch",
               "zh-Hant/concepts/actions",
               "zh-Hant/concepts/credits-and-usage",
               "zh-Hant/concepts/api-keys"
@@ -73,6 +75,7 @@
               "zh-Hans/concepts/how-hermai-works",
               "zh-Hans/concepts/schemas",
               "zh-Hans/concepts/catalog",
+              "zh-Hans/concepts/cloud-fetch",
               "zh-Hans/concepts/actions",
               "zh-Hans/concepts/credits-and-usage",
               "zh-Hans/concepts/api-keys"

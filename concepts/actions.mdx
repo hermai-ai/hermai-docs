@@ -60,7 +60,9 @@ For body parameters, your agent builds a JSON object. For query parameters, it a
 
 ## Executing actions
 
-There is no special execution layer in the current release. Your agent calls the site directly:
+You have two options. Pick whichever matches your stack.
+
+**Option A — call the site directly.** The catalog gives you the URL, method, headers, and params. Your agent fires the request:
 
 ```bash
 # Read: get the product catalog
@@ -72,7 +74,22 @@ curl -X POST "https://www.allbirds.com/cart/add.js" \
      -d '{"id": 41397031600208, "quantity": 1}'
 ```
 
-The catalog gives you the recipe. Your agent (or HTTP client) executes it.
+This is free — Hermai isn't in the request path — and works for any site that responds to a plain HTTPS call.
+
+**Option B — let Hermai run the call.** Send the same intent through [cloud fetch](/concepts/cloud-fetch) and Hermai handles the HTTP, the cookies, the signing, and the anti-bot work:
+
+```bash
+curl -X POST https://fetch.hermai.ai/v1/fetch \
+  -H "Authorization: Bearer hm_sk_…" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "site": "allbirds.com",
+    "endpoint": "add_to_cart",
+    "params": {"id": 41397031600208, "quantity": 1}
+  }'
+```
+
+This costs 1 credit per success. **Required for anti-bot sites** (x.com, booking.com, instagram.com, tiktok.com, etc.) where direct calls get blocked.
 
 ## Actions in contributed schemas
 

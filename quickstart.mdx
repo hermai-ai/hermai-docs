@@ -54,7 +54,9 @@ The response includes every endpoint and action the community has discovered:
 }
 ```
 
-## 4. Call the endpoint directly
+## 4. Call the endpoint — two options
+
+### Option A: call the site directly (free)
 
 Use the URL, method, and headers from the catalog response to call the site yourself:
 
@@ -64,7 +66,31 @@ curl -X POST "https://www.allbirds.com/cart/add.js" \
      -d '{"id": 41397031600208, "quantity": 1}'
 ```
 
-That's it. No browser, no proxy, no Hermai in the request path. You looked up the schema, you called the site directly.
+No browser, no proxy, no Hermai in the request path. Free.
+
+### Option B: let Hermai run the call (1 credit per success)
+
+Use [cloud fetch](/concepts/cloud-fetch) when you'd rather skip writing HTTP / proxy / cookie / signer code, or when the site is anti-bot-protected (x.com, booking.com, instagram.com, …) and won't respond to a plain call.
+
+```bash
+# By URL — for public APIs that already work over plain HTTPS
+curl -X POST https://api.hermai.ai/v1/fetch \
+     -H "Authorization: Bearer hm_sk_..." \
+     -H "Content-Type: application/json" \
+     -d '{"url": "https://api.github.com/users/torvalds"}'
+
+# By name — required for anti-bot sites
+curl -X POST https://fetch.hermai.ai/v1/fetch \
+     -H "Authorization: Bearer hm_sk_..." \
+     -H "Content-Type: application/json" \
+     -d '{
+       "site": "x.com",
+       "endpoint": "user_profile",
+       "params": {"variables": "{\"screen_name\":\"jack\"}", "features": "{…}"}
+     }'
+```
+
+Either shape returns clean projected JSON. See [Cloud fetch](/concepts/cloud-fetch) for the full reference.
 
 ## 5. Browse the registry
 
@@ -110,11 +136,12 @@ hermai registry push schema.json
   **Using Claude Code, Codex, or Cursor?** Run `npx skills add hermai-ai/hermai-skills` and your agent will do the discovery and push for you. See the [hermai-skills repo](https://github.com/hermai-ai/hermai-skills) for details.
 </Tip>
 
-You earn **+50 credits per site** for contributions. Credits become your starting balance when hosted execution launches.
+You earn **+50 credits per site** for contributions. Credits spend on [cloud-fetch](/concepts/cloud-fetch) calls — every site you contribute funds your future cloud requests against the registry.
 
 ## Next steps
 
 - [How Hermai works](/concepts/how-hermai-works) — the mental model
+- [Cloud fetch](/concepts/cloud-fetch) — let Hermai run the call for you
 - [Schemas](/concepts/schemas) — format, verification, contributing
 - [Catalog](/concepts/catalog) — the lookup API in detail
 - [API keys](/concepts/api-keys) — scopes and rate limits

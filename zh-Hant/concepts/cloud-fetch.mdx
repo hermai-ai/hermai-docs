@@ -1,0 +1,198 @@
+---
+title: "Cloud fetch"
+description: "讓 Hermai 幫你呼叫。一個端點,回傳乾淨 JSON,並替你處理 anti-bot。"
+---
+
+Catalog 告訴 agent「該怎麼呼叫網站」;Cloud fetch 則是「直接幫你呼叫」。呼叫單一 Hermai 端點,我們會代為發出對上游網站的請求、處理 anti-bot 挑戰、管理硬站的 session 與簽章請求,並回傳乾淨、已投射成 schema 欄位的 JSON。
+
+你不想自己寫 proxy / cookie / 簽章程式碼時就用它,或當網站是那些不會回應資料中心 IP 純 HTTPS 呼叫的站點時就更需要它。
+
+## 兩種呼叫方式
+
+Cloud fetch 有兩種請求形態。兩者都用你的 `hm_sk_…` 金鑰驗證,並各自**每次成功回應扣 1 個 credit**。
+
+<CardGroup cols={2}>
+  <Card title="用 URL" icon="link">
+    `POST https://api.hermai.ai/v1/fetch`
+
+    Body:`{"url": "https://…"}`
+
+    最適合已經有 URL 的公開 API。
+  </Card>
+  <Card title="用名稱" icon="bullseye">
+    `POST https://fetch.hermai.ai/v1/fetch`
+
+    Body:`{"site": "...", "endpoint": "...", "params": {…}}`
+
+    最適合 anti-bot 網站、需要簽章或登入態的端點。
+  </Card>
+</CardGroup>
+
+## 何時用哪種
+
+| 網站類型 | 範例 | 用哪個 |
+|---|---|---|
+| 公開 JSON API、無 anti-bot | github.com、bitbucket.org、coinbase.com、weather.gov、npmjs.com、nasa.gov | **用 URL** — 請求形態更簡單 |
+| Anti-bot / 簽章 / cookie 綁定 | x.com、booking.com、threads.com、instagram.com、tiktok.com、airbnb.com | **用名稱** — 必須;在這些網站「用 URL」會回傳空資料或 5xx |
+| Registry 內任何網站,但你手邊沒有確切 URL | 任何網站 | **用名稱** — agent 普遍偏好;不論網站差異都是同一種請求形態 |
+
+不確定時,先在 catalog 查一下(`GET /v1/catalog/{domain}`)。Catalog 回應會告訴你有哪些端點以及各自需要什麼參數 — 這就是「用名稱」呼叫所需的全部資訊。
+
+## 用 URL 呼叫
+
+```bash
+curl -X POST https://api.hermai.ai/v1/fetch \
+  -H "Authorization: Bearer hm_sk_…" \
+  -H "Content-Type: application/json" \
+  -d '{"url": "https://api.github.com/users/torvalds"}'
+```
+
+回應:
+
+```json
+{
+  "success": true,
+  "data": {
+    "login": "torvalds",
+    "name": "Linus Torvalds",
+    "company": "Linux Foundation",
+    "followers": 302438,
+    "…": "…"
+  },
+  "meta": {
+    "credits_used": 1,
+    "credits_remaining": 1049,
+    "latency_ms": 488,
+    "cached": false
+  }
+}
+```
+
+若 Hermai 已有該 URL 主機的 schema,回應會依 schema 欄位投射;否則回傳上游原始 JSON。
+
+<Note>
+  「用 URL」僅適用會回應純 HTTPS 呼叫的網站。Anti-bot 網站要用「用名稱」 — 見下方。
+</Note>
+
+## 用名稱呼叫
+
+這是處理硬站(X/Twitter、Booking、Threads、Instagram、TikTok,以及任何 catalog 條目提到需要 session、簽章或 cookie 的網站)的正確形態。
+
+```bash
+curl -X POST https://fetch.hermai.ai/v1/fetch \
+  -H "Authorization: Bearer hm_sk_…" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "site": "x.com",
+    "endpoint": "user_profile",
+    "params": {
+      "variables": "{\"screen_name\":\"jack\",\"withSafetyModeUserFields\":true}",
+      "features": "{\"hidden_profile_likes_enabled\":true, …}"
+    }
+  }'
+```
+
+回應(節錄):
+
+```json
+{
+  "data": {
+    "data": {
+      "user": {
+        "result": {
+          "core": { "screen_name": "jack", "name": "jack", "created_at": "Tue Mar 21 20:50:14 +0000 2006" },
+          "legacy": { "followers_count": 7421268, "description": "no state is the best state" }
+        }
+      }
+    }
+  },
+  "site": "x.com",
+  "endpoint": "user_profile"
+}
+```
+
+Hermai 替你打點 anti-bot 細節 — 對的 cookie、對的 TLS profile、需要時的請求簽章、上游推回時的重試。Agent 只需要說出它要什麼。
+
+### 怎麼找到正確的 `endpoint` 與 `params`
+
+1. 先在 catalog 查站:
+
+   ```bash
+   curl -H "Authorization: Bearer hm_sk_…" \
+        -H "X-Hermai-Intent: 在 X 上搜尋與 Zeabur 相關的貼文,彙整開發者回饋" \
+        "https://api.hermai.ai/v1/catalog/x.com"
+   ```
+
+2. 從回應中按 `name` 挑一個 endpoint。
+3. 看該 endpoint 的 `params` 列表,確認必要欄位。
+4. 用 `{"site":"x.com","endpoint":"<name>","params":{…}}` 呼叫 `fetch.hermai.ai/v1/fetch`。
+
+## 範例:在 X 搜尋「Zeabur」
+
+```bash
+curl -X POST https://fetch.hermai.ai/v1/fetch \
+  -H "Authorization: Bearer hm_sk_…" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "site": "x.com",
+    "endpoint": "search",
+    "params": {
+      "variables": "{\"rawQuery\":\"Zeabur\",\"count\":20,\"querySource\":\"typed_query\",\"product\":\"Latest\"}",
+      "features": "{…}",
+      "referer_query": "Zeabur"
+    }
+  }'
+```
+
+回應會帶回搜尋時間軸 — 20 則貼文,含作者、內文、按讚/轉推數、時間戳記。你這端不用瀏覽器、也不用搞 cookie。
+
+## 範例:在 Booking 搜尋飯店
+
+```bash
+curl -X POST https://fetch.hermai.ai/v1/fetch \
+  -H "Authorization: Bearer hm_sk_…" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "site": "booking.com",
+    "endpoint": "search_properties",
+    "params": {
+      "dest_id": "20015732",
+      "checkin": "2026-08-12",
+      "checkout": "2026-08-15",
+      "rooms": 1,
+      "adults": 2
+    }
+  }'
+```
+
+## 可能會看到的錯誤
+
+| 狀態碼 | 意思 | 怎麼處理 |
+|---|---|---|
+| `401 invalid or revoked API key` | 金鑰錯誤或已撤銷 | 檢查 `Authorization` header |
+| `402 INSUFFICIENT_CREDITS` | Credit 不足 | 在 dashboard 加值 |
+| `404 site not found` | 該網站尚未在 registry | 用 CLI 貢獻一份 — 見 [Schemas](/zh-Hant/concepts/schemas) |
+| `404 endpoint not found on schema` | endpoint 名稱錯誤 | 回 catalog 確認可用的 `name` |
+| `429 too many requests` | Workspace rate limit 用完 | 退避後重試;回應含 `Retry-After` |
+| `503 pool_empty` | 該網站需要託管 session,且池暫時為空 | 數秒後重試 — Hermai 會自動補池 |
+
+## 怎麼跟其他方案比
+
+- **vs. 自己寫爬蟲**:不必處理 proxy、瀏覽器、cookie 與簽章。一個 HTTPS 呼叫,回乾淨 JSON。
+- **vs. 先 catalog 再自己呼叫**:catalog-then-call 對純 HTTPS 公開 API 是免費的。Cloud fetch 每次成功扣 1 credit,但能搞定會擋直連的網站,且不論網站差異都是同一個介面。
+- **vs. 在本機跑 CLI**:CLI 跑在你的機器上 — 適合想用自己的 cookie 或登入態瀏覽器 session。Cloud fetch 跑在我們的機器上 — 適合本地零設定,或你在做伺服器端 bot。
+
+## Credits
+
+Cloud fetch **每次成功回應扣 1 個 credit**。失敗(我們重試後仍 4xx/5xx,或 schema-defect)不扣 credit — 預留會自動釋放。如何累積與加值請見 [Credits & usage](/zh-Hant/concepts/credits-and-usage)。
+
+## Catalog 查詢仍免費
+
+`GET /v1/catalog/{domain}` 與 `GET /v1/schemas/{site}/package` 不計入 credit。Cloud fetch 是唯一會計費的介面。這讓 agent 可以先自由探索 registry,再決定要不要對某個端點呼叫 cloud-fetch。
+
+## 下一步
+
+- [Catalog](/zh-Hant/concepts/catalog) — 查某個網站有哪些端點
+- [Schemas](/zh-Hant/concepts/schemas) — catalog 與 cloud-fetch 投射的格式基礎
+- [API keys](/zh-Hant/concepts/api-keys) — 申請金鑰、了解 rate limit
+- [Credits & usage](/zh-Hant/concepts/credits-and-usage) — 賺取與使用 credit

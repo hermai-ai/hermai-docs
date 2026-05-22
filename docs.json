@@ -28,6 +28,7 @@
               "concepts/schemas",
               "concepts/catalog",
               "concepts/actions",
+              "concepts/mcp",
               "concepts/credits-and-usage",
               "concepts/api-keys"
             ]

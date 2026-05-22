@@ -1,0 +1,85 @@
+---
+title: "MCP server"
+description: "Expose Hermai schemas and schema requests as Model Context Protocol tools."
+---
+
+Hermai ships an MCP server through `hermai-cli`. Use it when your agent runtime supports local MCP tools and you want agents to look up schemas or submit missing-workflow requests without scraping pages or hand-writing API calls.
+
+## Install
+
+Install the CLI:
+
+```bash
+go install github.com/hermai-ai/hermai-cli/cmd/hermai@latest
+```
+
+Authenticate for higher limits and schema-request submission:
+
+```bash
+hermai registry login
+```
+
+Start the server:
+
+```bash
+hermai mcp serve
+```
+
+Read-only catalog lookup works anonymously within public rate limits. Authenticated requests use the key saved by `hermai registry login`, or `HERMAI_PLATFORM_KEY` if you provide it in the MCP client environment.
+
+## Generic client config
+
+MCP client config paths vary by runtime, but the server entry has this shape:
+
+```json
+{
+  "mcpServers": {
+    "hermai": {
+      "command": "hermai",
+      "args": ["mcp", "serve"],
+      "env": {
+        "HERMAI_PLATFORM_KEY": "hm_sk_..."
+      }
+    }
+  }
+}
+```
+
+If you already ran `hermai registry login` on the same machine, the `HERMAI_PLATFORM_KEY` entry is optional.
+
+## Tools
+
+### `lookup_schema`
+
+Search Hermai by domain, task, category, or verification state. Use this before scraping a website.
+
+### `list_public_schemas`
+
+Browse public schemas with optional filters such as `q`, `category`, `verified`, `sort`, and `limit`.
+
+### `submit_schema_request`
+
+Submit the six-field intake for a missing or brittle workflow:
+
+- `domain`
+- `task`
+- `read_or_write`
+- `auth`
+- `output_shape`
+- `failure_mode`
+
+Optional context fields include `source_url`, `requester_agent`, `contact`, and `idempotency_key`.
+
+Never include cookies, API keys, bearer tokens, private session data, or credentials in a schema request.
+
+### `classify_browser_workflow`
+
+Locally classify prose as `direct_api`, `hidden_endpoint`, `browser_only`, `needs_owner`, or `needs_more_fields`. Use this to decide whether to look up an existing schema, submit a request, or ask the user for more intake fields.
+
+### `check_schema_request_status`
+
+Check a previously submitted schema request by id.
+
+## When to use MCP
+
+Use MCP when the agent runtime can run local tool servers. Use the direct HTTP API when the runtime cannot run MCP. Use CLI commands directly when you need terminal-oriented flows such as browser cookie import, session bootstrap, or signed write execution.

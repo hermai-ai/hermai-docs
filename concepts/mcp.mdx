@@ -10,13 +10,13 @@ Hermai ships a dedicated MCP server package. Use it when your agent runtime supp
 Run the MCP server directly with npm:
 
 ```bash
-npx -y @hermai-ai/mcp
+npx -y hermai-mcp
 ```
 
 Or install it globally:
 
 ```bash
-npm install -g @hermai-ai/mcp
+npm install -g hermai-mcp
 hermai-mcp
 ```
 
@@ -31,7 +31,7 @@ MCP client config paths vary by runtime, but the server entry has this shape:
   "mcpServers": {
     "hermai": {
       "command": "npx",
-      "args": ["-y", "@hermai-ai/mcp"],
+      "args": ["-y", "hermai-mcp"],
       "env": {
         "HERMAI_API_KEY": "hm_sk_..."
       }

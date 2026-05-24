@@ -3,29 +3,24 @@ title: "MCP server"
 description: "Expose Hermai schemas and schema requests as Model Context Protocol tools."
 ---
 
-Hermai ships an MCP server through `hermai-cli`. Use it when your agent runtime supports local MCP tools and you want agents to look up schemas or submit missing-workflow requests without scraping pages or hand-writing API calls.
+Hermai ships a dedicated MCP server package. Use it when your agent runtime supports local MCP tools and you want agents to look up schemas or submit missing-workflow requests without scraping pages or hand-writing API calls.
 
 ## Install
 
-Install the CLI:
+Run the MCP server directly with npm:
 
 ```bash
-go install github.com/hermai-ai/hermai-cli/cmd/hermai@latest
+npx -y @hermai/mcp
 ```
 
-Authenticate for higher limits and schema-request submission:
+Or install it globally:
 
 ```bash
-hermai registry login
+npm install -g @hermai/mcp
+hermai-mcp
 ```
 
-Start the server:
-
-```bash
-hermai mcp serve
-```
-
-Read-only catalog lookup works anonymously within public rate limits. Authenticated requests use the key saved by `hermai registry login`, or `HERMAI_PLATFORM_KEY` if you provide it in the MCP client environment.
+Read-only catalog lookup and public schema request intake work anonymously within public rate limits. Authenticated requests use `HERMAI_API_KEY` or `HERMAI_PLATFORM_KEY` if you provide it in the MCP client environment.
 
 ## Generic client config
 
@@ -35,17 +30,17 @@ MCP client config paths vary by runtime, but the server entry has this shape:
 {
   "mcpServers": {
     "hermai": {
-      "command": "hermai",
-      "args": ["mcp", "serve"],
+      "command": "npx",
+      "args": ["-y", "@hermai/mcp"],
       "env": {
-        "HERMAI_PLATFORM_KEY": "hm_sk_..."
+        "HERMAI_API_KEY": "hm_sk_..."
       }
     }
   }
 }
 ```
 
-If you already ran `hermai registry login` on the same machine, the `HERMAI_PLATFORM_KEY` entry is optional.
+The environment variable is optional for public lookup and schema request intake.
 
 ## Tools
 
@@ -64,11 +59,11 @@ Submit the six-field intake for a missing or brittle workflow:
 - `domain`
 - `task`
 - `read_or_write`
-- `auth`
+- `auth_shape`
 - `output_shape`
 - `failure_mode`
 
-Optional context fields include `source_url`, `requester_agent`, `contact`, and `idempotency_key`.
+Optional context fields include `source_url`, `requester_agent`, `requester_contact`, and `idempotency_key`.
 
 Never include cookies, API keys, bearer tokens, private session data, or credentials in a schema request.
 

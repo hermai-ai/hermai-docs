@@ -18,7 +18,9 @@ description: "速率限制、credits,以及目前版本的用量機制。"
 
 ## Credits
 
-Credits 透過貢獻與社群活動賺取:
+Credits 透過貢獻與社群活動賺取,並用在 [cloud fetch](/zh-Hant/concepts/cloud-fetch) 呼叫上。
+
+### 賺取
 
 | 行為 | Credits |
 |------|---------|
@@ -27,7 +29,15 @@ Credits 透過貢獻與社群活動賺取:
 | 推薦朋友 | 每位受邀 +100 |
 | 貢獻 schema | 每個網站 +50 |
 
-Credits 會累積在帳號中,**當託管執行上線時會成為你的起始餘額**。在目前版本沒有計費 — 只要在上方速率限制內,所有存取都免費。
+### 消耗
+
+| 呼叫 | Credits |
+|------|---------|
+| `POST https://api.hermai.ai/v1/fetch`(cloud fetch 用 URL) | 每次成功 1 |
+| `POST https://fetch.hermai.ai/v1/fetch`(cloud fetch 用名稱) | 每次成功 1 |
+| 失敗的 cloud-fetch 呼叫(重試後仍 4xx/5xx) | 0 — 預留會自動釋放 |
+
+Catalog 查詢、registry 瀏覽與 schema 推送都免費 — 不會消耗 credits。
 
 ## 哪些算一次請求?
 
@@ -35,6 +45,7 @@ Credits 會累積在帳號中,**當託管執行上線時會成為你的起始餘
 
 - `GET /v1/catalog/{domain}`(catalog 查詢)
 - `GET /v1/schemas/{site}/package`(schema 下載)
+- `POST /v1/fetch`(在 `api.hermai.ai` 或 `fetch.hermai.ai` 上)
 
 以下**不**計入速率限制:
 
@@ -54,6 +65,6 @@ Credits 會累積在帳號中,**當託管執行上線時會成為你的起始餘
 - **已獲得 credits** — 累計的 credits 餘額
 - **活動紀錄** — 每筆請求的 URL、狀態、延遲、時間戳
 
-## 目前版本沒有計費
+## 目前的免費方案
 
-沒有付費方案、沒有發票、不需要信用卡。速率限制是唯一的關卡。當託管執行上線時,credits 會轉換為可用餘額供 proxy 請求使用 — 早期累積 credits 的貢獻者會有領先優勢。
+免費方案涵蓋上方速率限制範圍內的所有功能,並包含你從貢獻與社群活動賺到的 credits。註冊不需信用卡 — 註冊後貢獻一個 schema,就可以馬上開始呼叫 cloud-fetch。針對更高流量與專屬容量的付費方案即將推出,最新定價請見[dashboard](https://hermai.ai/dashboard)。

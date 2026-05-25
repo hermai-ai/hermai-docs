@@ -111,6 +111,23 @@ These browse endpoints do **not** require an intent — they're designed for exp
 
 ## What about hosted execution?
 
-Currently, agents call the upstream sites directly using the URLs from the catalog response. Hermai is not in the request path.
+Agents can either call the upstream site directly with the data from the catalog response, or hand the call to Hermai via [cloud fetch](/concepts/cloud-fetch):
 
-Hosted execution — where Hermai proxies the request through its own infrastructure with anti-bot bypass, residential proxies, and session management — is coming in a future phase. [Join the waitlist](https://hermai.ai/waitlist) to express interest and help us model pricing.
+```bash
+# Direct: agent calls the site itself (free, no Hermai in the path)
+curl "https://www.allbirds.com/products.json"
+
+# Cloud fetch by URL: Hermai makes the call (1 credit, projected response)
+curl -X POST https://api.hermai.ai/v1/fetch \
+  -H "Authorization: Bearer hm_sk_…" \
+  -H "Content-Type: application/json" \
+  -d '{"url": "https://www.allbirds.com/products.json"}'
+
+# Cloud fetch by name: required for anti-bot sites (x.com, booking, etc.)
+curl -X POST https://fetch.hermai.ai/v1/fetch \
+  -H "Authorization: Bearer hm_sk_…" \
+  -H "Content-Type: application/json" \
+  -d '{"site":"x.com","endpoint":"user_profile","params":{…}}'
+```
+
+The catalog is free; cloud fetch charges 1 credit per successful response. See [Cloud fetch](/concepts/cloud-fetch) for the full reference.

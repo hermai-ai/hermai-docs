@@ -54,7 +54,9 @@ curl -H "Authorization: Bearer hm_sk_abc123..." \
 }
 ```
 
-## 4. 直接调用端点
+## 4. 调用端点 — 两种方式
+
+### 方式 A:自己调用网站(免费)
 
 用 catalog 响应里的 URL、method、headers 自行调用网站:
 
@@ -64,7 +66,31 @@ curl -X POST "https://www.allbirds.com/cart/add.js" \
      -d '{"id": 41397031600208, "quantity": 1}'
 ```
 
-就这样。不需要浏览器、不需要 proxy、Hermai 也不在请求路径上。你查询了 schema,然后直接调用了网站。
+不需要浏览器、不需要 proxy、Hermai 也不在请求路径上。免费。
+
+### 方式 B:让 Hermai 代为调用(每次成功 1 credit)
+
+当你不想自己写 HTTP / proxy / cookie / 签名代码,或网站有 anti-bot 保护(x.com、booking.com、instagram.com 等)无法吃纯调用时,改走 [cloud fetch](/zh-Hans/concepts/cloud-fetch)。
+
+```bash
+# 用 URL — 适合本来就吃纯 HTTPS 的公开 API
+curl -X POST https://api.hermai.ai/v1/fetch \
+     -H "Authorization: Bearer hm_sk_..." \
+     -H "Content-Type: application/json" \
+     -d '{"url": "https://api.github.com/users/torvalds"}'
+
+# 用名称 — anti-bot 网站必须用这条
+curl -X POST https://fetch.hermai.ai/v1/fetch \
+     -H "Authorization: Bearer hm_sk_..." \
+     -H "Content-Type: application/json" \
+     -d '{
+       "site": "x.com",
+       "endpoint": "user_profile",
+       "params": {"variables": "{\"screen_name\":\"jack\"}", "features": "{…}"}
+     }'
+```
+
+两种形态都返回干净投射过的 JSON。完整参考见 [Cloud fetch](/zh-Hans/concepts/cloud-fetch)。
 
 ## 5. 浏览 registry
 
@@ -110,11 +136,12 @@ hermai registry push schema.json
   **使用 Claude Code、Codex 或 Cursor?** 运行 `npx skills add hermai-ai/hermai-skills`,你的 agent 就会代替你完成发现与推送。详情见 [hermai-skills repo](https://github.com/hermai-ai/hermai-skills)。
 </Tip>
 
-每贡献一个网站可获得 **+50 credits**。当托管执行上线时,credits 会成为你的起始余额。
+每贡献一个网站可获得 **+50 credits**。Credits 可用于 [cloud-fetch](/zh-Hans/concepts/cloud-fetch) 调用 — 每次贡献都是为日后对 registry 的云端请求充值。
 
 ## 下一步
 
 - [Hermai 如何运作](/zh-Hans/concepts/how-hermai-works) — 心智模型
+- [Cloud fetch](/zh-Hans/concepts/cloud-fetch) — 让 Hermai 代为调用
 - [Schemas](/zh-Hans/concepts/schemas) — 格式、认证、贡献方式
 - [Catalog](/zh-Hans/concepts/catalog) — 查询 API 详情
 - [API keys](/zh-Hans/concepts/api-keys) — 范围与速率限制

@@ -54,7 +54,9 @@ curl -H "Authorization: Bearer hm_sk_abc123..." \
 }
 ```
 
-## 4. 直接呼叫端點
+## 4. 呼叫端點 — 兩種方式
+
+### 方式 A:自己呼叫網站(免費)
 
 用 catalog 回應裡的 URL、method、headers 自行呼叫網站:
 
@@ -64,7 +66,31 @@ curl -X POST "https://www.allbirds.com/cart/add.js" \
      -d '{"id": 41397031600208, "quantity": 1}'
 ```
 
-就這樣。不用瀏覽器、不用 proxy、Hermai 也不在請求路徑上。你查詢了 schema,然後直接呼叫網站。
+不用瀏覽器、不用 proxy、Hermai 也不在請求路徑上。免費。
+
+### 方式 B:讓 Hermai 代為呼叫(每次成功 1 credit)
+
+當你不想自己寫 HTTP / proxy / cookie / 簽章程式碼,或網站有 anti-bot 保護(x.com、booking.com、instagram.com 等)無法吃純呼叫時,改走 [cloud fetch](/zh-Hant/concepts/cloud-fetch)。
+
+```bash
+# 用 URL — 適合本來就吃純 HTTPS 的公開 API
+curl -X POST https://api.hermai.ai/v1/fetch \
+     -H "Authorization: Bearer hm_sk_..." \
+     -H "Content-Type: application/json" \
+     -d '{"url": "https://api.github.com/users/torvalds"}'
+
+# 用名稱 — anti-bot 網站必須用這條
+curl -X POST https://fetch.hermai.ai/v1/fetch \
+     -H "Authorization: Bearer hm_sk_..." \
+     -H "Content-Type: application/json" \
+     -d '{
+       "site": "x.com",
+       "endpoint": "user_profile",
+       "params": {"variables": "{\"screen_name\":\"jack\"}", "features": "{…}"}
+     }'
+```
+
+兩種形態都回乾淨投射過的 JSON。完整參考見 [Cloud fetch](/zh-Hant/concepts/cloud-fetch)。
 
 ## 5. 瀏覽 registry
 
@@ -110,11 +136,12 @@ hermai registry push schema.json
   **使用 Claude Code、Codex 或 Cursor?** 執行 `npx skills add hermai-ai/hermai-skills`,你的 agent 就會代替你完成探索與推送。詳情參見 [hermai-skills repo](https://github.com/hermai-ai/hermai-skills)。
 </Tip>
 
-每貢獻一個網站可獲得 **+50 credits**。當託管執行上線時,credits 會成為你的起始餘額。
+每貢獻一個網站可獲得 **+50 credits**。Credits 可用在 [cloud-fetch](/zh-Hant/concepts/cloud-fetch) 呼叫上 — 每次貢獻都是為日後對 registry 的雲端請求充值。
 
 ## 下一步
 
 - [Hermai 如何運作](/zh-Hant/concepts/how-hermai-works) — 心智模型
+- [Cloud fetch](/zh-Hant/concepts/cloud-fetch) — 讓 Hermai 代為呼叫
 - [Schemas](/zh-Hant/concepts/schemas) — 格式、認證、貢獻方式
 - [Catalog](/zh-Hant/concepts/catalog) — 查詢 API 細節
 - [API keys](/zh-Hant/concepts/api-keys) — 範圍與速率限制

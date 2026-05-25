@@ -1,0 +1,434 @@
+---
+title: "Cloud fetch"
+description: "Let Hermai run the call for you. One endpoint, returns clean JSON, handles anti-bot for you."
+---
+
+The catalog gives your agent the recipe for calling a site. Cloud fetch is the kitchen — call one Hermai endpoint and we make the upstream call on your behalf, handle anti-bot challenges, manage sessions and signed requests on hard sites, and return clean projected JSON.
+
+Use it when you'd rather not write proxy / cookie / signing code yourself, or when the site is one of the many that won't talk to a plain HTTPS call from a datacenter.
+
+<Tip>
+  **AI agent reading this?** The minimal recipe is:
+
+  1. `POST https://fetch.hermai.ai/v1/fetch` with header `Authorization: Bearer hm_sk_…`
+  2. Body shape: `{"site": "<site>", "endpoint": "<endpoint>", "params": {…}}`
+  3. To discover `<site>` and `<endpoint>` names, call `GET https://api.hermai.ai/v1/catalog/<domain>` with header `X-Hermai-Intent: <one sentence describing why you're calling>` (20+ chars, 5+ words)
+  4. The response is `{"data": {…clean projected JSON…}, "site": …, "endpoint": …}` — read `data` and you're done
+
+  That works for any site in the registry, including anti-bot ones like x.com, booking.com, instagram.com, tiktok.com.
+</Tip>
+
+## Your first call in 5 minutes
+
+End-to-end, from a blank slate to clean JSON in your terminal.
+
+<Steps>
+  <Step title="Get an API key">
+    Sign up at [hermai.ai/register](https://hermai.ai/register), open the dashboard, and create a key under **API Keys**. Copy it (it starts with `hm_sk_…` and is shown once).
+
+    ```bash
+    export HERMAI_KEY=hm_sk_…
+    ```
+  </Step>
+  <Step title="Find a site in the catalog">
+    The catalog tells you which sites Hermai knows about and which endpoint names each one exposes. Pick a domain you care about:
+
+    ```bash
+    curl -H "Authorization: Bearer $HERMAI_KEY" \
+         -H "X-Hermai-Intent: looking up github user profiles for a developer-research agent" \
+         "https://api.hermai.ai/v1/catalog/github.com" | head -c 800
+    ```
+
+    You'll get back a list of endpoints. Each has a `name`, `method`, `url`, and (when relevant) a `params` list. Pick one — say `GetUser`.
+  </Step>
+  <Step title="Run the cloud-fetch call">
+    Now hand the endpoint to Hermai:
+
+    ```bash
+    curl -X POST "https://fetch.hermai.ai/v1/fetch" \
+         -H "Authorization: Bearer $HERMAI_KEY" \
+         -H "Content-Type: application/json" \
+         -d '{"site":"github.com","endpoint":"GetUser","params":{"username":"torvalds"}}'
+    ```
+
+    Response (truncated):
+
+    ```json
+    {
+      "data": { "login": "torvalds", "name": "Linus Torvalds", "followers": 302438, "…": "…" },
+      "site": "github.com",
+      "endpoint": "GetUser"
+    }
+    ```
+  </Step>
+  <Step title="Try a hard site">
+    Same shape, harder site. This one would 500 if you called it yourself:
+
+    ```bash
+    curl -X POST "https://fetch.hermai.ai/v1/fetch" \
+         -H "Authorization: Bearer $HERMAI_KEY" \
+         -H "Content-Type: application/json" \
+         -d '{
+           "site": "x.com",
+           "endpoint": "user_profile",
+           "params": {
+             "variables": "{\"screen_name\":\"jack\",\"withSafetyModeUserFields\":true}",
+             "features": "{\"hidden_profile_likes_enabled\":true}"
+           }
+         }'
+    ```
+
+    Comes back with the full profile in ~1.5 seconds. Hermai handled the session and signing for you.
+  </Step>
+</Steps>
+
+You just made two cloud-fetch calls. The same pattern works for every site in [the registry](https://hermai.ai/schemas). Each successful call cost 1 credit; your starting balance covers thousands.
+
+## Two ways to call
+
+Cloud fetch has two request shapes. Both authenticate with your `hm_sk_…` key and both charge **1 credit per successful response**.
+
+<CardGroup cols={2}>
+  <Card title="By URL" icon="link">
+    `POST https://api.hermai.ai/v1/fetch`
+
+    Body: `{"url": "https://…"}`
+
+    Best for public APIs whose URL you already have.
+  </Card>
+  <Card title="By name" icon="bullseye">
+    `POST https://fetch.hermai.ai/v1/fetch`
+
+    Body: `{"site": "...", "endpoint": "...", "params": {…}}`
+
+    Best for anti-bot sites and signed/authenticated endpoints.
+  </Card>
+</CardGroup>
+
+## When to use which
+
+| Site shape | Examples | Use |
+|---|---|---|
+| Public JSON API, no anti-bot | github.com, bitbucket.org, coinbase.com, weather.gov, npmjs.com, nasa.gov | **By URL** — simpler request shape |
+| Anti-bot / signed / cookie-bound | x.com, booking.com, threads.com, instagram.com, tiktok.com, airbnb.com | **By name** — required; "by URL" returns empty or 5xx on these |
+| Anything in the registry, you don't have the exact URL handy | any site | **By name** — agents tend to prefer this; one shape regardless of site |
+
+If you're not sure, look up the site in the catalog (`GET /v1/catalog/{domain}`). The catalog response tells you which endpoints exist and what params they need — that's everything you need to call **by name**.
+
+## Call by URL
+
+<CodeGroup>
+```bash curl
+curl -X POST https://api.hermai.ai/v1/fetch \
+  -H "Authorization: Bearer hm_sk_…" \
+  -H "Content-Type: application/json" \
+  -d '{"url": "https://api.github.com/users/torvalds"}'
+```
+
+```python Python
+import requests
+
+resp = requests.post(
+    "https://api.hermai.ai/v1/fetch",
+    headers={"Authorization": "Bearer hm_sk_…"},
+    json={"url": "https://api.github.com/users/torvalds"},
+)
+data = resp.json()
+print(data["data"]["login"], "—", data["data"]["name"])
+```
+
+```js Node
+const resp = await fetch("https://api.hermai.ai/v1/fetch", {
+  method: "POST",
+  headers: {
+    "Authorization": "Bearer hm_sk_…",
+    "Content-Type": "application/json",
+  },
+  body: JSON.stringify({ url: "https://api.github.com/users/torvalds" }),
+});
+const data = await resp.json();
+console.log(data.data.login, "—", data.data.name);
+```
+
+```go Go
+package main
+
+import (
+    "bytes"
+    "encoding/json"
+    "fmt"
+    "net/http"
+)
+
+func main() {
+    body, _ := json.Marshal(map[string]string{
+        "url": "https://api.github.com/users/torvalds",
+    })
+    req, _ := http.NewRequest("POST", "https://api.hermai.ai/v1/fetch", bytes.NewReader(body))
+    req.Header.Set("Authorization", "Bearer hm_sk_…")
+    req.Header.Set("Content-Type", "application/json")
+
+    resp, _ := http.DefaultClient.Do(req)
+    defer resp.Body.Close()
+    var out struct {
+        Data map[string]any `json:"data"`
+    }
+    json.NewDecoder(resp.Body).Decode(&out)
+    fmt.Println(out.Data["login"], "—", out.Data["name"])
+}
+```
+</CodeGroup>
+
+Response:
+
+```json
+{
+  "success": true,
+  "data": {
+    "login": "torvalds",
+    "name": "Linus Torvalds",
+    "company": "Linux Foundation",
+    "followers": 302438,
+    "…": "…"
+  },
+  "meta": {
+    "credits_used": 1,
+    "credits_remaining": 1049,
+    "latency_ms": 488,
+    "cached": false
+  }
+}
+```
+
+If Hermai has a registered schema for the URL's host, the response is projected into the schema's fields. Otherwise you get the raw upstream JSON.
+
+<Note>
+  By-URL works only for sites that respond to a plain HTTPS call. Anti-bot sites need **by name** — see below.
+</Note>
+
+## Call by name
+
+This is the right shape for the hard sites — Twitter/X, Booking, Threads, Instagram, TikTok, and any site whose catalog entry mentions a session, signature, or cookie requirement.
+
+<CodeGroup>
+```bash curl
+curl -X POST https://fetch.hermai.ai/v1/fetch \
+  -H "Authorization: Bearer hm_sk_…" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "site": "x.com",
+    "endpoint": "user_profile",
+    "params": {
+      "variables": "{\"screen_name\":\"jack\",\"withSafetyModeUserFields\":true}",
+      "features": "{\"hidden_profile_likes_enabled\":true}"
+    }
+  }'
+```
+
+```python Python
+import json, requests
+
+resp = requests.post(
+    "https://fetch.hermai.ai/v1/fetch",
+    headers={"Authorization": "Bearer hm_sk_…"},
+    json={
+        "site": "x.com",
+        "endpoint": "user_profile",
+        "params": {
+            "variables": json.dumps({"screen_name": "jack", "withSafetyModeUserFields": True}),
+            "features": json.dumps({"hidden_profile_likes_enabled": True}),
+        },
+    },
+)
+user = resp.json()["data"]["data"]["user"]["result"]
+print(user["core"]["screen_name"], user["legacy"]["followers_count"])
+```
+
+```js Node
+const resp = await fetch("https://fetch.hermai.ai/v1/fetch", {
+  method: "POST",
+  headers: {
+    "Authorization": "Bearer hm_sk_…",
+    "Content-Type": "application/json",
+  },
+  body: JSON.stringify({
+    site: "x.com",
+    endpoint: "user_profile",
+    params: {
+      variables: JSON.stringify({ screen_name: "jack", withSafetyModeUserFields: true }),
+      features: JSON.stringify({ hidden_profile_likes_enabled: true }),
+    },
+  }),
+});
+const out = await resp.json();
+const user = out.data.data.user.result;
+console.log(user.core.screen_name, user.legacy.followers_count);
+```
+
+```go Go
+body, _ := json.Marshal(map[string]any{
+    "site": "x.com",
+    "endpoint": "user_profile",
+    "params": map[string]string{
+        "variables": `{"screen_name":"jack","withSafetyModeUserFields":true}`,
+        "features":  `{"hidden_profile_likes_enabled":true}`,
+    },
+})
+req, _ := http.NewRequest("POST", "https://fetch.hermai.ai/v1/fetch", bytes.NewReader(body))
+req.Header.Set("Authorization", "Bearer hm_sk_…")
+req.Header.Set("Content-Type", "application/json")
+
+resp, _ := http.DefaultClient.Do(req)
+defer resp.Body.Close()
+// parse resp.Body into your typed struct
+```
+</CodeGroup>
+
+Response (truncated):
+
+```json
+{
+  "data": {
+    "data": {
+      "user": {
+        "result": {
+          "core": { "screen_name": "jack", "name": "jack", "created_at": "Tue Mar 21 20:50:14 +0000 2006" },
+          "legacy": { "followers_count": 7421268, "description": "no state is the best state" }
+        }
+      }
+    }
+  },
+  "site": "x.com",
+  "endpoint": "user_profile"
+}
+```
+
+Hermai handles the anti-bot work on your side of the call — the right cookies, the right TLS profile, request signing where the site needs it, retries when the upstream pushes back. Your agent just names what it wants.
+
+### Finding the right `endpoint` and `params`
+
+1. Look up the site in the catalog:
+
+   ```bash
+   curl -H "Authorization: Bearer hm_sk_…" \
+        -H "X-Hermai-Intent: searching X for posts about Zeabur to summarise developer feedback" \
+        "https://api.hermai.ai/v1/catalog/x.com"
+   ```
+
+2. Pick an endpoint by `name` from the response.
+3. Read the endpoint's `params` list to see what's required.
+4. Call `fetch.hermai.ai/v1/fetch` with `{"site":"x.com","endpoint":"<name>","params":{…}}`.
+
+## Example: search X for "Zeabur"
+
+```bash
+curl -X POST https://fetch.hermai.ai/v1/fetch \
+  -H "Authorization: Bearer hm_sk_…" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "site": "x.com",
+    "endpoint": "search",
+    "params": {
+      "variables": "{\"rawQuery\":\"Zeabur\",\"count\":20,\"querySource\":\"typed_query\",\"product\":\"Latest\"}",
+      "features": "{…}",
+      "referer_query": "Zeabur"
+    }
+  }'
+```
+
+You'll get back the search timeline — 20 tweets, complete with author, body, like/retweet counts, timestamps. No browser, no cookie wrangling on your end.
+
+## Example: hotel search on Booking
+
+```bash
+curl -X POST https://fetch.hermai.ai/v1/fetch \
+  -H "Authorization: Bearer hm_sk_…" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "site": "booking.com",
+    "endpoint": "search_properties",
+    "params": {
+      "dest_id": "20015732",
+      "checkin": "2026-08-12",
+      "checkout": "2026-08-15",
+      "rooms": 1,
+      "adults": 2
+    }
+  }'
+```
+
+## Programmatic discovery for agents
+
+Most agents don't know upfront which sites need URL-mode vs schema-mode. The reliable algorithm is "always go through the catalog" — it tells you everything you need:
+
+```python
+import requests, urllib.parse
+
+def hermai_fetch(domain, intent, key, endpoint=None, params=None):
+    """One-shot wrapper: discover the site in the catalog, then run cloud-fetch."""
+    headers = {"Authorization": f"Bearer {key}", "X-Hermai-Intent": intent}
+
+    # 1. Look up the catalog for the domain
+    catalog = requests.get(
+        f"https://api.hermai.ai/v1/catalog/{urllib.parse.quote(domain)}",
+        headers=headers,
+    ).json()
+
+    if not catalog.get("endpoints"):
+        raise RuntimeError(f"no schema in registry for {domain}")
+
+    # 2. Pick the endpoint (caller passes a name, or default to the first read endpoint)
+    ep = next((e for e in catalog["endpoints"] if e["name"] == endpoint), None) \
+         if endpoint else catalog["endpoints"][0]
+
+    # 3. Schema-mode is the safe default — works for every site type
+    resp = requests.post(
+        "https://fetch.hermai.ai/v1/fetch",
+        headers={"Authorization": f"Bearer {key}"},
+        json={"site": domain, "endpoint": ep["name"], "params": params or {}},
+    )
+    return resp.json()
+
+
+# Usage
+print(hermai_fetch("github.com", "fetch torvalds profile for a code-research agent",
+                   "hm_sk_…", endpoint="GetUser", params={"username": "torvalds"}))
+
+print(hermai_fetch("x.com", "fetch jack's profile to enrich a contact card",
+                   "hm_sk_…", endpoint="user_profile",
+                   params={"variables": '{"screen_name":"jack"}', "features": "{}"}))
+```
+
+**Rule of thumb for agents**: when in doubt, use **schema-mode** (`fetch.hermai.ai`). It's the one shape that works for every site — public APIs, anti-bot sites, signed endpoints, everything. URL-mode is a convenience when you already have a URL string from somewhere.
+
+## Errors you might see
+
+| Status | Meaning | What to do |
+|---|---|---|
+| `401 invalid or revoked API key` | Wrong or revoked key | Check the `Authorization` header |
+| `402 INSUFFICIENT_CREDITS` | Out of credits | Top up in the dashboard |
+| `404 site not found` | Site isn't in the registry yet | Contribute one via the CLI — see [Schemas](/concepts/schemas) |
+| `404 endpoint not found on schema` | Wrong endpoint name | Re-check the catalog response for valid `name`s |
+| `429 too many requests` | Workspace rate limit hit | Back off and retry; the response includes `Retry-After` |
+| `503 pool_empty` | Site needs a managed session and the pool is briefly empty | Retry in a few seconds — Hermai refills automatically |
+
+## How it stacks up
+
+- **vs. writing your own scraper**: you skip the proxy, browser, cookie, and signing code. One HTTPS call, clean JSON back.
+- **vs. catalog-then-call-yourself**: catalog-then-call is free for public APIs that already work over plain HTTPS. Cloud fetch costs 1 credit per call but works for sites that block direct calls and gives you a single uniform interface.
+- **vs. running the CLI locally**: the CLI runs on your machine — useful when you want to use your own cookies or signed-in browser session. Cloud fetch runs on ours — useful when you want zero local setup or you're building a server-side bot.
+
+## Credits
+
+Cloud fetch charges **1 credit per successful response**. Failed calls (4xx/5xx from the upstream after our retries, schema-defect errors) don't consume credits — reservations are released automatically. See [Credits & usage](/concepts/credits-and-usage) for how to earn and top up credits.
+
+## Catalog lookups stay free
+
+`GET /v1/catalog/{domain}` and `GET /v1/schemas/{site}/package` don't count against your credit balance. Cloud fetch is the only billed surface. That lets your agent freely explore the registry before deciding whether to call cloud-fetch on a specific endpoint.
+
+## Next steps
+
+- [Catalog](/concepts/catalog) — look up which endpoints exist for a site
+- [Schemas](/concepts/schemas) — the format that powers both catalog and cloud-fetch projections
+- [API keys](/concepts/api-keys) — get a key, see your rate limits
+- [Credits & usage](/concepts/credits-and-usage) — earn credits, see your usage

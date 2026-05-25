@@ -60,7 +60,9 @@ body 参数用来组成 JSON 对象。query 参数附加到 URL。path 参数则
 
 ## 执行 action
 
-现阶段没有特别的执行层。你的 agent 直接调用网站:
+你有两种选择,看哪种更适合你的架构。
+
+**选项 A — 直接调用网站。** catalog 给你 URL、method、headers、params。agent 直接发出请求:
 
 ```bash
 # Read:获取商品目录
@@ -72,7 +74,22 @@ curl -X POST "https://www.allbirds.com/cart/add.js" \
      -d '{"id": 41397031600208, "quantity": 1}'
 ```
 
-catalog 提供食谱,agent(或 HTTP client)负责烹饪。
+完全免费 — Hermai 不在请求路径上 — 适用任何吃纯 HTTPS 的网站。
+
+**选项 B — 让 Hermai 代为调用。** 用 [cloud fetch](/zh-Hans/concepts/cloud-fetch) 把同样的意图发过来,Hermai 替你打点 HTTP、cookie、签名与 anti-bot:
+
+```bash
+curl -X POST https://fetch.hermai.ai/v1/fetch \
+  -H "Authorization: Bearer hm_sk_…" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "site": "allbirds.com",
+    "endpoint": "add_to_cart",
+    "params": {"id": 41397031600208, "quantity": 1}
+  }'
+```
+
+每次成功扣 1 credit。**Anti-bot 网站必须走这条**(x.com、booking.com、instagram.com、tiktok.com 等),直连会被拦。
 
 ## 贡献 schema 中的 action
 

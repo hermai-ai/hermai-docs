@@ -1,0 +1,434 @@
+---
+title: "Cloud fetch"
+description: "让 Hermai 帮你调用。一个端点,返回干净 JSON,并替你处理 anti-bot。"
+---
+
+Catalog 告诉 agent「该怎么调用网站」;Cloud fetch 则是「直接帮你调用」。调用一个 Hermai 端点,我们会代你发起对上游网站的请求、处理 anti-bot 挑战、管理硬站的 session 与签名请求,并返回干净、已投射成 schema 字段的 JSON。
+
+当你不想自己写 proxy / cookie / 签名代码时就用它,或当网站是那些不会响应数据中心 IP 纯 HTTPS 调用的站点时尤其需要它。
+
+<Tip>
+  **AI agent 在读这页?** 最精简的流程是:
+
+  1. `POST https://fetch.hermai.ai/v1/fetch`,header 加 `Authorization: Bearer hm_sk_…`
+  2. Body 形态:`{"site": "<site>", "endpoint": "<endpoint>", "params": {…}}`
+  3. 要查 `<site>` 与 `<endpoint>` 的名字,调用 `GET https://api.hermai.ai/v1/catalog/<domain>`,header 加 `X-Hermai-Intent: <一句话说明为何调用>`(20 字以上、5 个词以上)
+  4. 响应是 `{"data": {…干净投射过的 JSON…}, "site": …, "endpoint": …}` — 读 `data` 就好
+
+  这个流程对 registry 内任何网站都成立,包含 anti-bot 硬站(x.com、booking.com、instagram.com、tiktok.com)。
+</Tip>
+
+## 5 分钟第一次调用
+
+从零开始到看到干净 JSON 的完整流程。
+
+<Steps>
+  <Step title="申请 API key">
+    在 [hermai.ai/register](https://hermai.ai/register) 注册、打开 dashboard,并在 **API Keys** 下创建一个密钥。复制下来(以 `hm_sk_…` 开头,只显示一次)。
+
+    ```bash
+    export HERMAI_KEY=hm_sk_…
+    ```
+  </Step>
+  <Step title="从 catalog 找一个网站">
+    Catalog 会告诉你 Hermai 知道哪些网站,以及每个网站开放哪些 endpoint。先挑一个你想用的域名:
+
+    ```bash
+    curl -H "Authorization: Bearer $HERMAI_KEY" \
+         -H "X-Hermai-Intent: 为开发者研究 agent 查询 github 用户资料" \
+         "https://api.hermai.ai/v1/catalog/github.com" | head -c 800
+    ```
+
+    会拿到一份 endpoint 列表。每个 endpoint 都有 `name`、`method`、`url`,以及视情况的 `params` 列表。挑一个 — 例如 `GetUser`。
+  </Step>
+  <Step title="执行 cloud-fetch 调用">
+    把 endpoint 交给 Hermai:
+
+    ```bash
+    curl -X POST "https://fetch.hermai.ai/v1/fetch" \
+         -H "Authorization: Bearer $HERMAI_KEY" \
+         -H "Content-Type: application/json" \
+         -d '{"site":"github.com","endpoint":"GetUser","params":{"username":"torvalds"}}'
+    ```
+
+    响应(节选):
+
+    ```json
+    {
+      "data": { "login": "torvalds", "name": "Linus Torvalds", "followers": 302438, "…": "…" },
+      "site": "github.com",
+      "endpoint": "GetUser"
+    }
+    ```
+  </Step>
+  <Step title="试试硬站">
+    同一个形态、更硬的网站。自己直连这个会 500:
+
+    ```bash
+    curl -X POST "https://fetch.hermai.ai/v1/fetch" \
+         -H "Authorization: Bearer $HERMAI_KEY" \
+         -H "Content-Type: application/json" \
+         -d '{
+           "site": "x.com",
+           "endpoint": "user_profile",
+           "params": {
+             "variables": "{\"screen_name\":\"jack\",\"withSafetyModeUserFields\":true}",
+             "features": "{\"hidden_profile_likes_enabled\":true}"
+           }
+         }'
+    ```
+
+    约 1.5 秒返回完整 profile。Hermai 替你打点了 session 与签名。
+  </Step>
+</Steps>
+
+你刚刚做了两次 cloud-fetch 调用。同样的模式适用 [registry](https://hermai.ai/schemas) 内每个网站。每次成功扣 1 credit;起始余额够你跑上千次。
+
+## 两种调用方式
+
+Cloud fetch 有两种请求形态。两者都用你的 `hm_sk_…` 密钥认证,且各自**每次成功响应扣 1 个 credit**。
+
+<CardGroup cols={2}>
+  <Card title="用 URL" icon="link">
+    `POST https://api.hermai.ai/v1/fetch`
+
+    Body:`{"url": "https://…"}`
+
+    最适合已经有 URL 的公开 API。
+  </Card>
+  <Card title="用名称" icon="bullseye">
+    `POST https://fetch.hermai.ai/v1/fetch`
+
+    Body:`{"site": "...", "endpoint": "...", "params": {…}}`
+
+    最适合 anti-bot 网站、需要签名或登录态的端点。
+  </Card>
+</CardGroup>
+
+## 何时用哪种
+
+| 网站类型 | 示例 | 用哪个 |
+|---|---|---|
+| 公开 JSON API、无 anti-bot | github.com、bitbucket.org、coinbase.com、weather.gov、npmjs.com、nasa.gov | **用 URL** — 请求形态更简单 |
+| Anti-bot / 签名 / cookie 绑定 | x.com、booking.com、threads.com、instagram.com、tiktok.com、airbnb.com | **用名称** — 必需;在这些网站「用 URL」会返回空数据或 5xx |
+| Registry 内任何网站,但你手边没有确切 URL | 任何网站 | **用名称** — agent 普遍偏好;不论网站差异都是同一种请求形态 |
+
+不确定时,先在 catalog 查一下(`GET /v1/catalog/{domain}`)。Catalog 响应会告诉你有哪些端点以及各自需要什么参数 — 这就是「用名称」调用所需的全部信息。
+
+## 用 URL 调用
+
+<CodeGroup>
+```bash curl
+curl -X POST https://api.hermai.ai/v1/fetch \
+  -H "Authorization: Bearer hm_sk_…" \
+  -H "Content-Type: application/json" \
+  -d '{"url": "https://api.github.com/users/torvalds"}'
+```
+
+```python Python
+import requests
+
+resp = requests.post(
+    "https://api.hermai.ai/v1/fetch",
+    headers={"Authorization": "Bearer hm_sk_…"},
+    json={"url": "https://api.github.com/users/torvalds"},
+)
+data = resp.json()
+print(data["data"]["login"], "—", data["data"]["name"])
+```
+
+```js Node
+const resp = await fetch("https://api.hermai.ai/v1/fetch", {
+  method: "POST",
+  headers: {
+    "Authorization": "Bearer hm_sk_…",
+    "Content-Type": "application/json",
+  },
+  body: JSON.stringify({ url: "https://api.github.com/users/torvalds" }),
+});
+const data = await resp.json();
+console.log(data.data.login, "—", data.data.name);
+```
+
+```go Go
+package main
+
+import (
+    "bytes"
+    "encoding/json"
+    "fmt"
+    "net/http"
+)
+
+func main() {
+    body, _ := json.Marshal(map[string]string{
+        "url": "https://api.github.com/users/torvalds",
+    })
+    req, _ := http.NewRequest("POST", "https://api.hermai.ai/v1/fetch", bytes.NewReader(body))
+    req.Header.Set("Authorization", "Bearer hm_sk_…")
+    req.Header.Set("Content-Type", "application/json")
+
+    resp, _ := http.DefaultClient.Do(req)
+    defer resp.Body.Close()
+    var out struct {
+        Data map[string]any `json:"data"`
+    }
+    json.NewDecoder(resp.Body).Decode(&out)
+    fmt.Println(out.Data["login"], "—", out.Data["name"])
+}
+```
+</CodeGroup>
+
+响应:
+
+```json
+{
+  "success": true,
+  "data": {
+    "login": "torvalds",
+    "name": "Linus Torvalds",
+    "company": "Linux Foundation",
+    "followers": 302438,
+    "…": "…"
+  },
+  "meta": {
+    "credits_used": 1,
+    "credits_remaining": 1049,
+    "latency_ms": 488,
+    "cached": false
+  }
+}
+```
+
+若 Hermai 已有该 URL 主机的 schema,响应会按 schema 字段投射;否则返回上游原始 JSON。
+
+<Note>
+  「用 URL」仅适用会响应纯 HTTPS 调用的网站。Anti-bot 网站要用「用名称」 — 见下方。
+</Note>
+
+## 用名称调用
+
+这是处理硬站(X/Twitter、Booking、Threads、Instagram、TikTok,以及任何 catalog 条目提到需要 session、签名或 cookie 的网站)的正确形态。
+
+<CodeGroup>
+```bash curl
+curl -X POST https://fetch.hermai.ai/v1/fetch \
+  -H "Authorization: Bearer hm_sk_…" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "site": "x.com",
+    "endpoint": "user_profile",
+    "params": {
+      "variables": "{\"screen_name\":\"jack\",\"withSafetyModeUserFields\":true}",
+      "features": "{\"hidden_profile_likes_enabled\":true}"
+    }
+  }'
+```
+
+```python Python
+import json, requests
+
+resp = requests.post(
+    "https://fetch.hermai.ai/v1/fetch",
+    headers={"Authorization": "Bearer hm_sk_…"},
+    json={
+        "site": "x.com",
+        "endpoint": "user_profile",
+        "params": {
+            "variables": json.dumps({"screen_name": "jack", "withSafetyModeUserFields": True}),
+            "features": json.dumps({"hidden_profile_likes_enabled": True}),
+        },
+    },
+)
+user = resp.json()["data"]["data"]["user"]["result"]
+print(user["core"]["screen_name"], user["legacy"]["followers_count"])
+```
+
+```js Node
+const resp = await fetch("https://fetch.hermai.ai/v1/fetch", {
+  method: "POST",
+  headers: {
+    "Authorization": "Bearer hm_sk_…",
+    "Content-Type": "application/json",
+  },
+  body: JSON.stringify({
+    site: "x.com",
+    endpoint: "user_profile",
+    params: {
+      variables: JSON.stringify({ screen_name: "jack", withSafetyModeUserFields: true }),
+      features: JSON.stringify({ hidden_profile_likes_enabled: true }),
+    },
+  }),
+});
+const out = await resp.json();
+const user = out.data.data.user.result;
+console.log(user.core.screen_name, user.legacy.followers_count);
+```
+
+```go Go
+body, _ := json.Marshal(map[string]any{
+    "site": "x.com",
+    "endpoint": "user_profile",
+    "params": map[string]string{
+        "variables": `{"screen_name":"jack","withSafetyModeUserFields":true}`,
+        "features":  `{"hidden_profile_likes_enabled":true}`,
+    },
+})
+req, _ := http.NewRequest("POST", "https://fetch.hermai.ai/v1/fetch", bytes.NewReader(body))
+req.Header.Set("Authorization", "Bearer hm_sk_…")
+req.Header.Set("Content-Type", "application/json")
+
+resp, _ := http.DefaultClient.Do(req)
+defer resp.Body.Close()
+// 把 resp.Body 解析到你自己的结构体中
+```
+</CodeGroup>
+
+响应(节选):
+
+```json
+{
+  "data": {
+    "data": {
+      "user": {
+        "result": {
+          "core": { "screen_name": "jack", "name": "jack", "created_at": "Tue Mar 21 20:50:14 +0000 2006" },
+          "legacy": { "followers_count": 7421268, "description": "no state is the best state" }
+        }
+      }
+    }
+  },
+  "site": "x.com",
+  "endpoint": "user_profile"
+}
+```
+
+Hermai 替你打点 anti-bot 细节 — 对的 cookie、对的 TLS profile、需要时的请求签名、上游推回时的重试。Agent 只需要说出它要什么。
+
+### 怎么找到正确的 `endpoint` 与 `params`
+
+1. 先在 catalog 查站:
+
+   ```bash
+   curl -H "Authorization: Bearer hm_sk_…" \
+        -H "X-Hermai-Intent: 在 X 上搜索与 Zeabur 相关的帖子,汇总开发者反馈" \
+        "https://api.hermai.ai/v1/catalog/x.com"
+   ```
+
+2. 从响应中按 `name` 挑一个 endpoint。
+3. 看该 endpoint 的 `params` 列表,确认必要字段。
+4. 用 `{"site":"x.com","endpoint":"<name>","params":{…}}` 调用 `fetch.hermai.ai/v1/fetch`。
+
+## 示例:在 X 搜索「Zeabur」
+
+```bash
+curl -X POST https://fetch.hermai.ai/v1/fetch \
+  -H "Authorization: Bearer hm_sk_…" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "site": "x.com",
+    "endpoint": "search",
+    "params": {
+      "variables": "{\"rawQuery\":\"Zeabur\",\"count\":20,\"querySource\":\"typed_query\",\"product\":\"Latest\"}",
+      "features": "{…}",
+      "referer_query": "Zeabur"
+    }
+  }'
+```
+
+响应会带回搜索时间线 — 20 条帖子,含作者、正文、点赞/转推数、时间戳。你这端无需浏览器,也不用搞 cookie。
+
+## 示例:在 Booking 搜索酒店
+
+```bash
+curl -X POST https://fetch.hermai.ai/v1/fetch \
+  -H "Authorization: Bearer hm_sk_…" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "site": "booking.com",
+    "endpoint": "search_properties",
+    "params": {
+      "dest_id": "20015732",
+      "checkin": "2026-08-12",
+      "checkout": "2026-08-15",
+      "rooms": 1,
+      "adults": 2
+    }
+  }'
+```
+
+## Agent 的程序化发现
+
+多数 agent 一开始并不知道哪些网站该用「用 URL」、哪些该用「用名称」。最稳妥的算法是「永远走 catalog」 — 它会告诉你所有需要的信息:
+
+```python
+import requests, urllib.parse
+
+def hermai_fetch(domain, intent, key, endpoint=None, params=None):
+    """一站式封装:先在 catalog 查站,再执行 cloud-fetch。"""
+    headers = {"Authorization": f"Bearer {key}", "X-Hermai-Intent": intent}
+
+    # 1. 查 catalog
+    catalog = requests.get(
+        f"https://api.hermai.ai/v1/catalog/{urllib.parse.quote(domain)}",
+        headers=headers,
+    ).json()
+
+    if not catalog.get("endpoints"):
+        raise RuntimeError(f"registry 中没有 {domain} 的 schema")
+
+    # 2. 挑 endpoint(调用者指定名字,否则默认第一个读取端点)
+    ep = next((e for e in catalog["endpoints"] if e["name"] == endpoint), None) \
+         if endpoint else catalog["endpoints"][0]
+
+    # 3. Schema-mode 是最安全的默认 — 对每种网站都有效
+    resp = requests.post(
+        "https://fetch.hermai.ai/v1/fetch",
+        headers={"Authorization": f"Bearer {key}"},
+        json={"site": domain, "endpoint": ep["name"], "params": params or {}},
+    )
+    return resp.json()
+
+
+# 用法
+print(hermai_fetch("github.com", "为代码研究 agent 获取 torvalds 的个人资料",
+                   "hm_sk_…", endpoint="GetUser", params={"username": "torvalds"}))
+
+print(hermai_fetch("x.com", "为了丰富联系卡而获取 jack 的个人资料",
+                   "hm_sk_…", endpoint="user_profile",
+                   params={"variables": '{"screen_name":"jack"}', "features": "{}"}))
+```
+
+**Agent 的经验法则**:不确定时就用 **schema-mode**(`fetch.hermai.ai`)。它是唯一适用所有网站类型的单一形态 — 公开 API、anti-bot 硬站、签名端点全包。URL-mode 只是当你手边已经有 URL 字符串时的便捷写法。
+
+## 可能会看到的错误
+
+| 状态码 | 意思 | 怎么处理 |
+|---|---|---|
+| `401 invalid or revoked API key` | 密钥错误或已撤销 | 检查 `Authorization` header |
+| `402 INSUFFICIENT_CREDITS` | Credit 不足 | 在 dashboard 加值 |
+| `404 site not found` | 该网站尚未在 registry | 用 CLI 贡献一份 — 见 [Schemas](/zh-Hans/concepts/schemas) |
+| `404 endpoint not found on schema` | endpoint 名称错误 | 回 catalog 确认可用的 `name` |
+| `429 too many requests` | Workspace rate limit 用完 | 退避后重试;响应含 `Retry-After` |
+| `503 pool_empty` | 该网站需要托管 session,且池暂时为空 | 数秒后重试 — Hermai 会自动补池 |
+
+## 怎么跟其他方案比
+
+- **vs. 自己写爬虫**:不必处理 proxy、浏览器、cookie 与签名。一个 HTTPS 调用,回干净 JSON。
+- **vs. 先 catalog 再自己调用**:catalog-then-call 对纯 HTTPS 公开 API 是免费的。Cloud fetch 每次成功扣 1 credit,但能搞定会拦直连的网站,且不论网站差异都是同一个接口。
+- **vs. 在本机跑 CLI**:CLI 跑在你的机器上 — 适合想用自己的 cookie 或登录态浏览器 session。Cloud fetch 跑在我们的机器上 — 适合本地零设置,或你在做服务端 bot。
+
+## Credits
+
+Cloud fetch **每次成功响应扣 1 个 credit**。失败(我们重试后仍 4xx/5xx,或 schema-defect)不扣 credit — 预留会自动释放。如何累积与加值请见 [Credits & usage](/zh-Hans/concepts/credits-and-usage)。
+
+## Catalog 查询仍免费
+
+`GET /v1/catalog/{domain}` 与 `GET /v1/schemas/{site}/package` 不计入 credit。Cloud fetch 是唯一会计费的接口。这让 agent 可以先自由探索 registry,再决定要不要对某个端点调用 cloud-fetch。
+
+## 下一步
+
+- [Catalog](/zh-Hans/concepts/catalog) — 查某个网站有哪些端点
+- [Schemas](/zh-Hans/concepts/schemas) — catalog 与 cloud-fetch 投射的格式基础
+- [API keys](/zh-Hans/concepts/api-keys) — 申请密钥、了解 rate limit
+- [Credits & usage](/zh-Hans/concepts/credits-and-usage) — 赚取与使用 credit

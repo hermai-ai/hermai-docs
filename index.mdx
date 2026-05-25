@@ -9,12 +9,15 @@ Think of it as **HuggingFace, but for website APIs**.
 
 ## How it works
 
-<CardGroup cols={2}>
+<CardGroup cols={3}>
   <Card title="Contribute with the CLI" icon="terminal">
     Use the discovery toolkit (`hermai detect`, `probe`, `extract`, `intercept`) to document a site's endpoints, then `hermai registry push` to add them to the catalog.
   </Card>
   <Card title="Look up from the registry" icon="magnifying-glass">
     Call `GET /v1/catalog/{domain}` to get all known endpoints for a site. The platform serves schemas contributed by the community — instant, structured, no discovery cost.
+  </Card>
+  <Card title="Or let Hermai run the call" icon="cloud-arrow-down">
+    Call `POST /v1/fetch` and Hermai makes the upstream request for you — handling anti-bot, sessions, and signed requests on hard sites (x.com, booking, threads, etc.). Returns clean JSON.
   </Card>
 </CardGroup>
 
@@ -36,6 +39,9 @@ Think of it as **HuggingFace, but for website APIs**.
   </Card>
   <Card title="Catalog" icon="compass" href="/concepts/catalog">
     The lookup API that agents call at runtime.
+  </Card>
+  <Card title="Cloud fetch" icon="cloud-arrow-down" href="/concepts/cloud-fetch">
+    Let Hermai run the call for you — one endpoint, returns clean JSON.
   </Card>
   <Card title="Actions" icon="hand-pointer" href="/concepts/actions">
     Read and write actions that schemas expose.

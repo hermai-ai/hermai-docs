@@ -29,13 +29,16 @@ Credits are earned through contributions and community activity:
 
 Credits accumulate in your account and are shown in the dashboard.
 
-Hosted fetch uses credits. The response includes `credits_used` and `credits_remaining` so your agent can track usage:
+Hosted fetch uses credits. The response `meta` object includes `credits_used` and `credits_remaining` so your agent can track usage:
 
 ```json
 {
   "success": true,
-  "credits_used": 1,
-  "credits_remaining": 499
+  "data": {},
+  "meta": {
+    "credits_used": 1,
+    "credits_remaining": 499
+  }
 }
 ```
 

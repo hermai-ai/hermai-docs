@@ -3,7 +3,7 @@ title: "Introduction"
 description: "Hermai is a community-driven schema registry for AI agents."
 ---
 
-Hermai is a schema registry where developers contribute website API schemas and AI agents consume them. Point an agent at any domain in the registry and get back the full list of callable endpoints — URLs, methods, headers, parameters — ready to execute. No browser, no HTML parsing, no wasted tokens.
+Hermai is a schema registry and hosted fetch API for AI agents. Point an agent at any domain in the registry to find callable endpoints, then either execute the endpoint yourself or call Hermai's hosted `/v1/fetch` API for managed execution.
 
 Think of it as **HuggingFace, but for website APIs**.
 
@@ -15,6 +15,9 @@ Think of it as **HuggingFace, but for website APIs**.
   </Card>
   <Card title="Look up from the registry" icon="magnifying-glass">
     Call `GET /v1/catalog/{domain}` to get all known endpoints for a site. The platform serves schemas contributed by the community — instant, structured, no discovery cost.
+  </Card>
+  <Card title="Run hosted fetch" icon="cloud-arrow-down">
+    Call `POST /v1/fetch` with a site, endpoint, and params. Hermai executes the registered endpoint and returns structured JSON.
   </Card>
 </CardGroup>
 
@@ -30,6 +33,9 @@ Think of it as **HuggingFace, but for website APIs**.
   </Card>
   <Card title="How Hermai works" icon="wand-magic-sparkles" href="/concepts/how-hermai-works">
     The mental model: contributors discover, agents consume.
+  </Card>
+  <Card title="Hosted fetch" icon="cloud-arrow-down" href="/concepts/hosted-fetch">
+    Run registered endpoints through Hermai.
   </Card>
   <Card title="Schemas" icon="database" href="/concepts/schemas">
     What schemas are, how to contribute them, and the verified badge.

@@ -5,6 +5,8 @@ description: "The lookup API that agents call at runtime to get endpoints for an
 
 The catalog is the agent-facing lookup endpoint. Give it a domain, get back every callable endpoint and action that the community has discovered for that site.
 
+Use the catalog when you want endpoint recipes. Use [hosted fetch](/concepts/hosted-fetch) when you want Hermai to execute a registered endpoint for you.
+
 ## Basic usage
 
 ```bash
@@ -43,7 +45,7 @@ Response:
 }
 ```
 
-Each endpoint includes everything your agent needs to construct a valid HTTP request: URL template, method, headers, and parameters.
+Each endpoint includes what your agent needs to construct a valid HTTP request: URL template, method, headers, and parameters.
 
 ## Intent
 
@@ -111,6 +113,20 @@ These browse endpoints do **not** require an intent — they're designed for exp
 
 ## What about hosted execution?
 
-Currently, agents call the upstream sites directly using the URLs from the catalog response. Hermai is not in the request path.
+Hosted execution is available through `POST /v1/fetch`. Instead of calling the upstream site yourself, pass the registered `site`, `endpoint`, and `params` to Hermai:
 
-Hosted execution — where Hermai proxies the request through its own infrastructure with anti-bot bypass, residential proxies, and session management — is coming in a future phase. [Join the waitlist](https://hermai.ai/waitlist) to express interest and help us model pricing.
+```bash
+curl -sS -X POST "https://api.hermai.ai/v1/fetch" \
+  -H "Authorization: Bearer ${HERMAI_API_KEY}" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "site": "semanticscholar.org",
+    "endpoint": "get_paper",
+    "params": {
+      "paper_id": "ARXIV:1706.03762",
+      "fields": "paperId,externalIds,title,authors,venue,year"
+    }
+  }'
+```
+
+The catalog gives you the recipe. Hosted fetch runs the registered endpoint and returns the result.

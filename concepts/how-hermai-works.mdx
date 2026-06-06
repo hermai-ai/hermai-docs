@@ -5,11 +5,13 @@ description: "Contributors discover, agents consume. The mental model in two min
 
 ## The split
 
-Hermai has two sides:
+Hermai has three pieces:
 
 1. **The CLI** ([hermai-cli](https://github.com/hermai-ai/hermai-cli), open source) — runs on your machine. Contributors use it to inspect a site and compose a schema describing its endpoints, then push the schema to the registry.
 
-2. **The platform** (api.hermai.ai) — a schema registry. It stores and serves the schemas that contributors have pushed. Agents query it at runtime to get instant, structured endpoint data for any domain in the registry. No browser, no discovery cost, sub-200ms.
+2. **The registry** (`api.hermai.ai`) — stores and serves schemas that contributors have pushed. Agents query it at runtime to get endpoint names, parameters, URL templates, and response shapes for any domain in the registry.
+
+3. **Hosted fetch** (`POST /v1/fetch`) — executes a registered endpoint through Hermai and returns the result. Use it when you want Hermai to run the request instead of executing the schema yourself.
 
 ```
 Contributor                        Platform                         Agent
@@ -22,8 +24,10 @@ Contributor                        Platform                         Agent
     │                                  │   { endpoints, actions }      │
     │                                  │ ────────────────────────────> │
     │                                  │                               │
-    │                                  │   (agent calls site directly) │
-    │                                  │                        curl ──┘
+    │                                  │   POST /v1/fetch              │
+    │                                  │ <────────────────────────────│
+    │                                  │   structured result           │
+    │                                  │ ────────────────────────────> │
 ```
 
 ## What the CLI does
@@ -41,13 +45,14 @@ The contributor composes a schema JSON file from what they find and pushes it wi
 
 ## What the platform does
 
-The platform is a lookup-only registry:
+The platform exposes both lookup and hosted execution:
 
 - **`GET /v1/catalog/{domain}`** — returns all endpoints and actions for a domain. This is the main agent-facing endpoint. Requires an [intent](/concepts/catalog#intent) describing why you need it.
 - **`GET /v1/schemas`** — browse and search the full registry.
+- **`POST /v1/fetch`** — execute a registered endpoint through Hermai. Requires an API key.
 - **`POST /v1/schemas`** — push a new schema. Validated against the [intent taxonomy](/concepts/catalog#intent-taxonomy) and published immediately.
 
-The platform does **not** execute requests on your behalf. Agents call the upstream sites directly using the URLs from the catalog response. Hosted execution is coming in a future phase — [join the waitlist](https://hermai.ai/waitlist) if you're interested.
+You can still use Hermai as a registry only: pull the schema package, then execute the upstream request from your own infrastructure. Hosted fetch is the managed path when you want Hermai to run a registered endpoint.
 
 ## Why this split?
 
@@ -55,5 +60,5 @@ Discovery is expensive (browser + LLM + time). Lookup is cheap (database read). 
 
 - **Contributors** pay the discovery cost once, locally, on their own machine
 - **Every agent after them** gets instant structured data for free
-- **The platform** has no compute cost for discovery — it's a registry with auth and analytics on top
+- **The registry** keeps discovery separate from runtime execution
 - **No vendor lock-in** — the CLI is open source (AGPL-3.0) and works offline

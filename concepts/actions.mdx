@@ -44,7 +44,7 @@ When you call `GET /v1/catalog/{domain}`, the response includes both read endpoi
 }
 ```
 
-Your agent reads the `method`, `url`, `headers`, and `params` fields and constructs the HTTP request directly.
+Your agent reads the `method`, `url`, `headers`, and `params` fields and constructs the HTTP request. For registered endpoints that support hosted execution, you can also call `POST /v1/fetch` with the endpoint name and params.
 
 ## Parameters
 
@@ -60,7 +60,9 @@ For body parameters, your agent builds a JSON object. For query parameters, it a
 
 ## Executing actions
 
-There is no special execution layer in the current release. Your agent calls the site directly:
+You can execute a schema in two ways.
+
+For self execution, your agent calls the upstream site directly:
 
 ```bash
 # Read: get the product catalog
@@ -72,7 +74,23 @@ curl -X POST "https://www.allbirds.com/cart/add.js" \
      -d '{"id": 41397031600208, "quantity": 1}'
 ```
 
-The catalog gives you the recipe. Your agent (or HTTP client) executes it.
+For hosted execution, call Hermai with the registered site, endpoint, and params:
+
+```bash
+curl -sS -X POST "https://api.hermai.ai/v1/fetch" \
+  -H "Authorization: Bearer ${HERMAI_API_KEY}" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "site": "semanticscholar.org",
+    "endpoint": "get_paper",
+    "params": {
+      "paper_id": "ARXIV:1706.03762",
+      "fields": "title,authors,year"
+    }
+  }'
+```
+
+The catalog gives you the recipe. Hosted fetch runs registered endpoints through Hermai.
 
 ## Actions in contributed schemas
 

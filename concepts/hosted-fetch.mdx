@@ -1,0 +1,126 @@
+---
+title: "Hosted fetch"
+description: "Run registered endpoints through Hermai's hosted execution API."
+---
+
+Hosted fetch lets you call registered Hermai endpoints through the hosted API when they are available for hosted execution. Send a `site`, an `endpoint`, and optional `params`; Hermai runs the request and returns the structured result.
+
+Use hosted fetch when you want production execution through Hermai instead of downloading a schema and calling the upstream site yourself.
+
+## Basic request
+
+```bash
+export HERMAI_API_KEY="hm_sk_..."
+
+curl -sS -X POST "https://api.hermai.ai/v1/fetch" \
+  -H "Authorization: Bearer ${HERMAI_API_KEY}" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "site": "semanticscholar.org",
+    "endpoint": "get_paper",
+    "params": {
+      "paper_id": "ARXIV:1706.03762",
+      "fields": "paperId,externalIds,title,authors,venue,year,referenceCount,citationCount,openAccessPdf"
+    }
+  }'
+```
+
+Response:
+
+```json
+{
+  "success": true,
+  "data": {
+    "paperId": "204e3073870fae3d05bcbc2f6a8e263d9b72e776",
+    "title": "Attention is All you Need",
+    "year": 2017,
+    "citationCount": 183000
+  },
+  "meta": {
+    "site": "semanticscholar.org",
+    "endpoint": "get_paper",
+    "method": "GET",
+    "source": "gateway",
+    "latency_ms": 1234,
+    "credits_used": 1,
+    "credits_remaining": 499,
+    "cached": false
+  }
+}
+```
+
+## Request body
+
+| Field | Type | Required | Description |
+|-------|------|----------|-------------|
+| `site` | string | Yes | Registered site domain, such as `semanticscholar.org` |
+| `endpoint` | string | Yes | Endpoint name from the schema, such as `get_paper` |
+| `params` | object | No | Endpoint parameters. Values are strings, numbers, booleans, arrays, or objects. |
+
+## Finding endpoints
+
+Browse public schema cards without an API key:
+
+```bash
+curl "https://api.hermai.ai/v1/schemas/semanticscholar.org"
+```
+
+Pull the full package when you need URL templates, request details, and the full parameter contract:
+
+```bash
+curl -H "Authorization: Bearer ${HERMAI_API_KEY}" \
+     -H "X-Hermai-Intent: using Semantic Scholar metadata for citation enrichment" \
+     "https://api.hermai.ai/v1/schemas/semanticscholar.org/package"
+```
+
+You can also use the [catalog API](/concepts/catalog) when you want your own agent or server to call upstream sites directly.
+
+## Citation metadata examples
+
+Hosted fetch is useful for publication and repository metadata workflows. Common registered routes include:
+
+| Site | Example endpoint | Typical lookup |
+|------|------------------|----------------|
+| `semanticscholar.org` | `get_paper` | Semantic Scholar, DOI, PubMed, Corpus, or arXiv IDs |
+| `openalex.org` | `works_search`, `get_work` | Works by title, DOI, or OpenAlex ID |
+| `crossref.org` | `filter_work_by_doi`, `get_work_by_doi` | DOI metadata |
+| `pubmed.ncbi.nlm.nih.gov` | `search_pubmed`, `summarize_pubmed` | PubMed search and PMID summaries |
+| `europepmc.org` | `search`, `get_by_ext_id` | Europe PMC literature metadata |
+| `datacite.org` | `get_doi`, `search_dois` | DOI metadata for datasets and preprints |
+| `unpaywall.org` | `get_by_doi` | Open-access status and links |
+| `huggingface.co` | `get_model_by_owner_repo`, `get_dataset_by_owner_repo`, `get_paper_repos` | Model, dataset, and paper-linked repository metadata |
+| `github.com` | `GetRepository`, `SearchRepositories` | Repository metadata |
+| `sciencedirect.com`, `nature.com` | `metadata_by_doi_crossref`, `metadata_by_doi_openalex` | DOI metadata via Crossref or OpenAlex |
+
+For publisher pages such as ScienceDirect or Nature, use DOI metadata routes. Hermai does not need to scrape protected article pages to return citation metadata.
+
+## Errors
+
+Errors use the standard API envelope:
+
+```json
+{
+  "success": false,
+  "error": {
+    "code": "MISSING_ENDPOINT",
+    "message": "The 'endpoint' field is required"
+  }
+}
+```
+
+Common error codes include:
+
+| Code | Meaning |
+|------|---------|
+| `INVALID_JSON` | Request body is not valid JSON |
+| `MISSING_SITE` | `site` is required |
+| `MISSING_ENDPOINT` | `endpoint` is required |
+| `INSUFFICIENT_CREDITS` | The account does not have enough credits for hosted execution |
+| `FETCH_FAILED` | Hermai could not complete the upstream request |
+| `RESOURCE_UNAVAILABLE` | A hosted resource needed by the endpoint is not currently available |
+
+## When to use catalog instead
+
+Use `GET /v1/catalog/{domain}` or `GET /v1/schemas/{site}/package` when you want the schema recipe and plan to execute requests yourself.
+
+Use `POST /v1/fetch` when you want Hermai to execute a supported registered endpoint and return the result.

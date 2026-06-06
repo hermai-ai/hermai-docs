@@ -17,6 +17,15 @@ Keys look like: `hm_sk_abc123...`
 Pass it as a Bearer token in the `Authorization` header:
 
 ```bash
+curl -sS -X POST "https://api.hermai.ai/v1/fetch" \
+     -H "Authorization: Bearer hm_sk_abc123..." \
+     -H "Content-Type: application/json" \
+     -d '{"site":"semanticscholar.org","endpoint":"get_paper","params":{"paper_id":"ARXIV:1706.03762","fields":"title,authors,year"}}'
+```
+
+You also use the same Bearer token for catalog and package routes:
+
+```bash
 curl -H "Authorization: Bearer hm_sk_abc123..." \
      -H "X-Hermai-Intent: looking up Shopify endpoints for a shopping agent" \
      "https://api.hermai.ai/v1/catalog/allbirds.com"
@@ -28,6 +37,7 @@ curl -H "Authorization: Bearer hm_sk_abc123..." \
 |---|---|---|
 | Rate limit | 5 req/hour | 50 req/hour, 500/day |
 | Catalog lookup | Yes (with intent) | Yes (with intent) |
+| Hosted fetch | No | Yes |
 | Browse registry | Yes | Yes |
 | Push schemas | No | Yes |
 | Download full schema package | No | Yes |

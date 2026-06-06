@@ -27,7 +27,17 @@ Credits are earned through contributions and community activity:
 | Refer a friend | +100 per invite |
 | Contribute a schema | +50 per site |
 
-Credits accumulate in your account and **become your starting balance when hosted execution launches** in a future phase. In the current release, there's no billing — all access is free within the rate limits above.
+Credits accumulate in your account and are shown in the dashboard.
+
+Hosted fetch uses credits. The response includes `credits_used` and `credits_remaining` so your agent can track usage:
+
+```json
+{
+  "success": true,
+  "credits_used": 1,
+  "credits_remaining": 499
+}
+```
 
 ## What counts as a request?
 
@@ -35,6 +45,7 @@ Every call to these endpoints counts against your rate limit:
 
 - `GET /v1/catalog/{domain}` (catalog lookup)
 - `GET /v1/schemas/{site}/package` (schema download)
+- `POST /v1/fetch` (hosted execution)
 
 These do **not** count against rate limits:
 
@@ -54,6 +65,6 @@ Your [dashboard](https://hermai.ai/dashboard) shows:
 - **Credits earned** — your accumulated credit balance
 - **Activity logs** — per-request detail with URL, status, latency, and timestamp
 
-## No billing in the current release
+## Billing and limits
 
-There are no paid tiers, no invoices, no credit card required. Rate limits are the only gate. When hosted execution launches, credits will convert to a usable balance for proxied requests — contributors who built up credits early will have a head start.
+You can sign up and create an API key without a credit card. Rate limits and credits control self-serve usage. If your account does not have enough credits for hosted execution, `POST /v1/fetch` returns `402 INSUFFICIENT_CREDITS`.

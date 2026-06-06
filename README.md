@@ -14,7 +14,8 @@ Hermai is a community-driven schema registry for AI agents. Developers discover 
 ├── index.mdx             Landing page
 ├── quickstart.mdx        Sign up → API key → first query → contribute
 ├── concepts/
-│   ├── how-hermai-works.mdx   Two-sided mental model: CLI discovers, platform serves
+│   ├── how-hermai-works.mdx   Mental model: CLI discovery, registry lookup, hosted fetch
+│   ├── hosted-fetch.mdx       Hosted execution API
 │   ├── schemas.mdx            Schema format, contribution paths, validation, verified badge
 │   ├── catalog.mdx            Lookup API, intent requirement, rate limits, browsing
 │   ├── actions.mdx            Action types (api_call, navigate, search, paginate, submit_form)

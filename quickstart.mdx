@@ -1,6 +1,6 @@
 ---
 title: "Quickstart"
-description: "Sign up, get an API key, and query your first schema in 2 minutes."
+description: "Sign up, get an API key, and run your first hosted fetch in 2 minutes."
 ---
 
 ## 1. Sign up
@@ -15,58 +15,43 @@ Go to **Dashboard > API Keys** and create a new key. Copy it — you'll need it 
 hm_sk_abc123...
 ```
 
-Anonymous requests work too (5 per hour), but an API key gives you 50/hour and 500/day.
+Some registry browsing requests work anonymously, but hosted fetch requires an API key.
 
-## 3. Query the catalog
+## 3. Run hosted fetch
 
-Look up all known endpoints for a domain:
+Call a registered endpoint through Hermai:
 
 ```bash
-curl -H "Authorization: Bearer hm_sk_abc123..." \
-     -H "X-Hermai-Intent: looking up product endpoints on allbirds.com to build a price comparison agent" \
-     "https://api.hermai.ai/v1/catalog/allbirds.com"
+export HERMAI_API_KEY="hm_sk_abc123..."
+
+curl -sS -X POST "https://api.hermai.ai/v1/fetch" \
+  -H "Authorization: Bearer ${HERMAI_API_KEY}" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "site": "semanticscholar.org",
+    "endpoint": "get_paper",
+    "params": {
+      "paper_id": "ARXIV:1706.03762",
+      "fields": "paperId,externalIds,title,authors,venue,year,referenceCount,citationCount,openAccessPdf"
+    }
+  }'
 ```
 
-The response includes every endpoint and action the community has discovered:
+Response:
 
 ```json
 {
-  "domain": "allbirds.com",
-  "endpoints": [
-    {
-      "name": "shopify_products",
-      "method": "GET",
-      "url": "https://www.allbirds.com/products.json",
-      "description": "Shopify store product catalog"
-    },
-    {
-      "name": "add_to_cart",
-      "method": "POST",
-      "url": "https://www.allbirds.com/cart/add.js",
-      "headers": { "Content-Type": "application/json" },
-      "kind": "api_call",
-      "params": [
-        { "name": "id", "source": "body", "required": true },
-        { "name": "quantity", "source": "body", "required": true }
-      ]
-    }
-  ]
+  "success": true,
+  "data": {
+    "paperId": "204e3073870fae3d05bcbc2f6a8e263d9b72e776",
+    "title": "Attention is All you Need",
+    "year": 2017
+  },
+  "credits_used": 1
 }
 ```
 
-## 4. Call the endpoint directly
-
-Use the URL, method, and headers from the catalog response to call the site yourself:
-
-```bash
-curl -X POST "https://www.allbirds.com/cart/add.js" \
-     -H "Content-Type: application/json" \
-     -d '{"id": 41397031600208, "quantity": 1}'
-```
-
-That's it. No browser, no proxy, no Hermai in the request path. You looked up the schema, you called the site directly.
-
-## 5. Browse the registry
+## 4. Browse available schemas
 
 Explore what's available at [hermai.ai/schemas](https://hermai.ai/schemas), or via the API:
 
@@ -74,15 +59,27 @@ Explore what's available at [hermai.ai/schemas](https://hermai.ai/schemas), or v
 # List all schemas
 curl "https://api.hermai.ai/v1/schemas"
 
-# Filter by category
-curl "https://api.hermai.ai/v1/schemas?category=commerce"
-
-# Only verified schemas
-curl "https://api.hermai.ai/v1/schemas?verified=true"
-
-# Browse the intent taxonomy
-curl "https://api.hermai.ai/v1/categories"
+# Get one public schema card
+curl "https://api.hermai.ai/v1/schemas/semanticscholar.org"
 ```
+
+Public schema cards show the site, description, endpoint names, methods, purposes, and user-facing readiness signals.
+
+## 5. Pull a package or self execute
+
+If you want your own agent or server to execute requests directly, pull the catalog or full package with an intent:
+
+```bash
+curl -H "Authorization: Bearer ${HERMAI_API_KEY}" \
+     -H "X-Hermai-Intent: looking up product endpoints on allbirds.com to build a price comparison agent" \
+     "https://api.hermai.ai/v1/catalog/allbirds.com"
+
+curl -H "Authorization: Bearer ${HERMAI_API_KEY}" \
+     -H "X-Hermai-Intent: downloading Semantic Scholar metadata routes for citation enrichment" \
+     "https://api.hermai.ai/v1/schemas/semanticscholar.org/package"
+```
+
+The catalog and package routes return the endpoint recipe. `POST /v1/fetch` executes a registered endpoint through Hermai.
 
 ## 6. Contribute a schema
 
@@ -110,11 +107,12 @@ hermai registry push schema.json
   **Using Claude Code, Codex, or Cursor?** Run `npx skills add hermai-ai/hermai-skills` and your agent will do the discovery and push for you. See the [hermai-skills repo](https://github.com/hermai-ai/hermai-skills) for details.
 </Tip>
 
-You earn **+50 credits per site** for contributions. Credits become your starting balance when hosted execution launches.
+You earn **+50 credits per site** for contributions. Credits are tracked in your dashboard and can be used for hosted execution where available.
 
 ## Next steps
 
 - [How Hermai works](/concepts/how-hermai-works) — the mental model
+- [Hosted fetch](/concepts/hosted-fetch) — run registered endpoints through Hermai
 - [Schemas](/concepts/schemas) — format, verification, contributing
 - [Catalog](/concepts/catalog) — the lookup API in detail
 - [API keys](/concepts/api-keys) — scopes and rate limits

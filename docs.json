@@ -25,6 +25,7 @@
             "group": "Core concepts",
             "pages": [
               "concepts/how-hermai-works",
+              "concepts/hosted-fetch",
               "concepts/schemas",
               "concepts/catalog",
               "concepts/actions",

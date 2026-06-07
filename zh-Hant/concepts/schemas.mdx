@@ -3,7 +3,7 @@ title: "Schemas"
 description: "什麼是 schema、如何貢獻,以及認證徽章制度。"
 ---
 
-schema 是一份 JSON 文件,描述如何與一個網站對話。它列出網站提供的每個端點和 action — URL、HTTP method、必要 headers、參數、以及回應格式。一旦某個網站有了 schema,任何 agent 都能直接查詢並呼叫端點,不需要重新探索。
+schema 是一份 JSON 文件,描述如何與一個網站對話。它列出網站提供的每個端點和 action - URL、HTTP method、必要 headers、參數、以及回應格式。一旦某個網站有了 schema,任何 agent 都能直接查詢並呼叫端點,不需要重新探索。
 
 ## schema 包含什麼
 
@@ -110,7 +110,7 @@ go install github.com/hermai-ai/hermai-cli/cmd/hermai@latest
 hermai detect https://example.com
 hermai wellknown example.com
 
-# 從詳細頁面擷取內嵌資料 — 可辨識 13 種模式,
+# 從詳細頁面擷取內嵌資料 - 可辨識 13 種模式,
 # 包含 __NEXT_DATA__、JSON-LD、ytInitialData、__APOLLO_STATE__ 等。
 hermai probe --body https://example.com/products/123 | hermai extract
 
@@ -124,7 +124,7 @@ hermai introspect https://example.com/graphql
 hermai registry push schema.json
 ```
 
-每個子指令都輸出 JSON,可直接交給下一步處理 — 不需要 LLM key。
+每個子指令都輸出 JSON,可直接交給下一步處理 - 不需要 LLM key。
 
 ### 選項 2:讓你的 agent 代勞
 
@@ -147,7 +147,7 @@ curl -X POST "https://api.hermai.ai/v1/schemas" \
   "intent_category": "commerce",
   "schema_format_version": "0.1",
   "name": "allbirds-shopify",
-  "description": "Shopify AJAX API for allbirds.com — product catalog and cart",
+  "description": "Shopify AJAX API for allbirds.com - product catalog and cart",
   "endpoints": [
     {
       "name": "shopify_products",
@@ -243,10 +243,10 @@ curl -X POST "https://api.hermai.ai/v1/schemas" \
 ```
 
 <Tip>
-  **從最小開始。** 你不需要一次對應每個端點 — 即便只有一個有用的端點,也是合格的貢獻。其他貢獻者可以後續推送涵蓋更廣的新版本。
+  **從最小開始。** 你不需要一次對應每個端點 - 即便只有一個有用的端點,也是合格的貢獻。其他貢獻者可以後續推送涵蓋更廣的新版本。
 </Tip>
 
-Schema 會立即上線 — 沒有審核隊列。
+Schema 會立即上線 - 沒有審核隊列。
 
 ### 驗證規則
 
@@ -276,13 +276,13 @@ Schema 會立即上線 — 沒有審核隊列。
 
 | 欄位 | 為何禁用 |
 |------|---------|
-| `proxy_credentials` | 實際 proxy 登入憑證 — 絕不可公開的機密 |
-| `residential_proxy` | Proxy 基礎設施設定 — 屬於營運而非 schema 資料 |
-| `clearance_cookie_js` | 用於產生 clearance cookies 的 JavaScript — 軍備競賽式的實作細節 |
-| `clearance_cookies` | 短暫的 session cookies — 網站特定且有時效,對其他使用者無意義 |
-| `bypass_method` | 描述繞過技術 — 違反命名政策 |
-| `stealth_script` | 自訂的反偵測 JavaScript — 屬於營運而非 schema 資料 |
-| `tls_fingerprint` | 特定的 TLS profile 識別 — 變動頻繁,由 CLI 執行時管理較合適,不應寫進 schema |
+| `proxy_credentials` | 實際 proxy 登入憑證 - 絕不可公開的機密 |
+| `residential_proxy` | Proxy 基礎設施設定 - 屬於營運而非 schema 資料 |
+| `clearance_cookie_js` | 用於產生 clearance cookies 的 JavaScript - 軍備競賽式的實作細節 |
+| `clearance_cookies` | 短暫的 session cookies - 網站特定且有時效,對其他使用者無意義 |
+| `bypass_method` | 描述繞過技術 - 違反命名政策 |
+| `stealth_script` | 自訂的反偵測 JavaScript - 屬於營運而非 schema 資料 |
+| `tls_fingerprint` | 特定的 TLS profile 識別 - 變動頻繁,由 CLI 執行時管理較合適,不應寫進 schema |
 
 <Note>
   **能力訊號是被允許的。** 差別在於:告訴 agent 網站*需要什麼*的中介資料(例如 `requires_stealth: true`)是可以的;描述*如何*繞過防禦的營運機密(例如 `proxy_credentials: "user:pass@host"`)則不可。前者屬於 schema,後者屬於 CLI 執行環境。
@@ -290,7 +290,7 @@ Schema 會立即上線 — 沒有審核隊列。
 
 ### 內容定址
 
-每份 schema 都會被雜湊(以排序 key 的正規 JSON 產生 SHA-256)。hash 即是版本 ID。對同一個網站重複推送相同內容等同無動作 — registry 會辨識為重複。
+每份 schema 都會被雜湊(以排序 key 的正規 JSON 產生 SHA-256)。hash 即是版本 ID。對同一個網站重複推送相同內容等同無動作 - registry 會辨識為重複。
 
 ## 認證徽章
 
@@ -326,7 +326,7 @@ curl "https://api.hermai.ai/v1/schemas/allbirds.com/versions"
 
 registry 對每份 schema 提供兩種檢視:
 
-**公開卡片**(不需 API key)— 描述 schema *做什麼*的中介資料:
+**公開卡片**(不需 API key)- 描述 schema *做什麼*的中介資料:
 - Site、分類、名稱、說明
 - 端點名稱、method、描述
 - 變數名稱與來源(path/query/body)
@@ -334,7 +334,7 @@ registry 對每份 schema 提供兩種檢視:
 - 回應欄位名稱與型別(僅頂層)
 - 能力徽章(需要瀏覽器、需要 session、需要驗證)
 
-**完整套件**(需 API key + intent)— agent *執行*所需的一切:
+**完整套件**(需 API key + intent)- agent *執行*所需的一切:
 - 完整 URL 模板
 - Headers 值
 - Body 模板

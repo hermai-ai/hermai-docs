@@ -3,7 +3,7 @@ title: "Schemas"
 description: "What schemas are, how to contribute them, and the verified badge system."
 ---
 
-A schema is a JSON description of how to talk to a website. It lists every endpoint and action the site exposes — URLs, HTTP methods, required headers, parameters, and response shapes. Once a schema exists for a site, any agent can look it up and call the endpoints directly, without re-discovering them.
+A schema is a JSON description of how to talk to a website. It lists the endpoints and actions the site exposes: URLs, HTTP methods, required headers, parameters, and response shapes. Once a schema exists for a site, callers can look it up and use the endpoints without rediscovering them.
 
 ## What's in a schema
 
@@ -110,7 +110,7 @@ go install github.com/hermai-ai/hermai-cli/cmd/hermai@latest
 hermai detect https://example.com
 hermai wellknown example.com
 
-# Extract embedded data from a detail page — recognises 13 patterns
+# Extract embedded data from a detail page
 # including __NEXT_DATA__, JSON-LD, ytInitialData, __APOLLO_STATE__, etc.
 hermai probe --body https://example.com/products/123 | hermai extract
 
@@ -124,7 +124,7 @@ hermai introspect https://example.com/graphql
 hermai registry push schema.json
 ```
 
-Each subcommand emits JSON that the next step can consume — no LLM key needed.
+Each subcommand emits JSON that the next step can consume. No LLM key is needed.
 
 ### Option 2: Let your agent do it
 
@@ -147,7 +147,7 @@ curl -X POST "https://api.hermai.ai/v1/schemas" \
   "intent_category": "commerce",
   "schema_format_version": "0.1",
   "name": "allbirds-shopify",
-  "description": "Shopify AJAX API for allbirds.com — product catalog and cart",
+  "description": "Shopify AJAX API for allbirds.com - product catalog and cart",
   "endpoints": [
     {
       "name": "shopify_products",
@@ -243,10 +243,10 @@ If validation fails, you get a specific error code:
 ```
 
 <Tip>
-  **Start minimal.** You don't need to map every endpoint — even a single useful endpoint is a valid contribution. Other contributors can push updated versions with more coverage later.
+  **Start minimal.** You don't need to map every endpoint. Even a single useful endpoint is a valid contribution. Other contributors can push updated versions with more coverage later.
 </Tip>
 
-Schemas go live immediately — no approval queue.
+Schemas go live immediately. There is no approval queue.
 
 ### Validation rules
 
@@ -276,13 +276,13 @@ These JSON keys are rejected if found anywhere in the schema, at any depth:
 
 | Field | Why it's forbidden |
 |-------|-------------------|
-| `proxy_credentials` | Actual proxy login credentials — a secret that must never be published |
-| `residential_proxy` | Proxy infrastructure configuration — operational, not schema data |
-| `clearance_cookie_js` | JavaScript used to generate clearance cookies — an arms-race implementation detail |
-| `clearance_cookies` | Ephemeral session cookies — site-specific and time-limited, not useful to other users |
-| `bypass_method` | Describes a circumvention technique — violates naming policy |
-| `stealth_script` | Custom anti-detection JavaScript — operational, not schema data |
-| `tls_fingerprint` | Specific TLS profile identifier — this changes frequently and is better managed by the CLI runtime than baked into a schema |
+| `proxy_credentials` | Actual proxy login credentials. This is a secret and must never be published. |
+| `residential_proxy` | Proxy infrastructure configuration. This is operational data, not schema data. |
+| `clearance_cookie_js` | JavaScript used to generate clearance cookies. This is an implementation detail, not public schema content. |
+| `clearance_cookies` | Ephemeral session cookies. These are site-specific, time-limited, and not useful to other users. |
+| `bypass_method` | Describes a circumvention technique and violates the naming policy. |
+| `stealth_script` | Custom anti-detection JavaScript. This is operational data, not schema data. |
+| `tls_fingerprint` | Specific TLS profile identifier. This changes frequently and belongs in the runtime, not in a schema. |
 
 <Note>
   **Capability signals are allowed.** The distinction is between metadata that helps agents understand *what* a site requires (like `requires_stealth: true`) and operational secrets that describe *how* to bypass a defense (like `proxy_credentials: "user:pass@host"`). The former belongs in schemas; the latter belongs in the CLI runtime.
@@ -290,7 +290,7 @@ These JSON keys are rejected if found anywhere in the schema, at any depth:
 
 ### Content addressing
 
-Each schema is hashed (SHA-256 of canonical JSON with sorted keys). The hash becomes the version ID. Pushing the same content twice for the same site is a no-op — the registry recognizes it as a duplicate.
+Each schema is hashed (SHA-256 of canonical JSON with sorted keys). The hash becomes the version ID. Pushing the same content twice for the same site is a no-op because the registry recognizes it as a duplicate.
 
 ## Verified badge
 
@@ -326,7 +326,7 @@ curl "https://api.hermai.ai/v1/schemas/allbirds.com/versions"
 
 The registry exposes two views of every schema:
 
-**Public card** (no API key needed) — metadata about *what* the schema does:
+**Public card** (no API key needed): metadata about *what* the schema does:
 - Site, category, name, description
 - Endpoint names, methods, descriptions
 - Variable names and sources (path/query/body)
@@ -334,7 +334,7 @@ The registry exposes two views of every schema:
 - Response field names and types (top level only)
 - Capability badges (requires browser, requires session, has auth)
 
-**Full package** (API key + intent required) — everything an agent needs to *execute*:
+**Full package** (API key + intent required): everything a caller needs to *execute*:
 - URL templates with actual URLs
 - Header values
 - Body templates

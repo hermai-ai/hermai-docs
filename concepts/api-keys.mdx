@@ -8,7 +8,7 @@ description: "Authenticate requests to get higher rate limits and access the ful
 1. Sign in at [hermai.ai/dashboard](https://hermai.ai/dashboard)
 2. Go to **API Keys**
 3. Click **Create key**, give it a label
-4. Copy the key — it's shown once and can't be retrieved later
+4. Copy the key. It is shown once and cannot be retrieved later.
 
 Keys look like: `hm_sk_abc123...`
 
@@ -48,18 +48,18 @@ curl -H "Authorization: Bearer hm_sk_abc123..." \
 
 Each API key has a **schema access** setting that controls whether unverified schemas are included in catalog responses:
 
-- **Verified only** — catalog returns only schemas that have been reviewed and verified by the Hermai team. Safest option.
-- **All schemas** (default) — includes both verified and unverified community contributions. More coverage, less curation.
+- **Verified only:** catalog returns only schemas that have been reviewed and verified by the Hermai team. Safest option.
+- **All schemas** (default): includes both verified and unverified community contributions. More coverage, less curation.
 
 You can change this per-key in the dashboard under **API Keys > Schema access**.
 
 ## Revoking a key
 
-Go to **Dashboard > API Keys**, find the key, and click **Revoke**. The key stops working immediately. Revocation is permanent — create a new key if you need one.
+Go to **Dashboard > API Keys**, find the key, and click **Revoke**. The key stops working immediately. Revocation is permanent. Create a new key if you need one.
 
 ## Security
 
-- Keys authenticate your requests. They're not used for request signing — just Bearer token auth.
+- Keys authenticate your requests. They are not used for request signing, just Bearer token auth.
 - Store keys securely. Don't commit them to source control.
 - Each key is independently revocable, so you can rotate one without affecting others.
-- Keys are hashed server-side — we can't recover a lost key.
+- Keys are hashed server-side. We cannot recover a lost key.

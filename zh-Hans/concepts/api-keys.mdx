@@ -8,7 +8,7 @@ description: "验证请求以获得更高速率限制并访问完整 registry。
 1. 到 [hermai.ai/dashboard](https://hermai.ai/dashboard) 登录
 2. 进入 **API Keys**
 3. 点 **Create key**,给它一个标签
-4. 复制 key — 只会显示一次,之后无法找回
+4. 复制 key - 只会显示一次,之后无法找回
 
 Key 形如:`hm_sk_abc123...`
 
@@ -42,18 +42,18 @@ curl -sS -X POST "https://api.hermai.ai/v1/fetch" \
 
 每个 API key 都有 **schema access** 设置,控制 catalog 响应中是否包含未认证的 schema:
 
-- **仅认证** — catalog 只返回经 Hermai 团队审核认证的 schema。最安全选项。
-- **全部 schema**(默认) — 同时包含认证与未认证的社区贡献。覆盖更广,审核更少。
+- **仅认证** - catalog 只返回经 Hermai 团队审核认证的 schema。最安全选项。
+- **全部 schema**(默认) - 同时包含认证与未认证的社区贡献。覆盖更广,审核更少。
 
 可在 dashboard 的 **API Keys > Schema access** 为每个 key 单独设置。
 
 ## 撤销 key
 
-到 **Dashboard > API Keys**,找到 key 并点 **Revoke**。key 会立即失效。撤销无法撤回 — 如需请创建新 key。
+到 **Dashboard > API Keys**,找到 key 并点 **Revoke**。key 会立即失效。撤销无法撤回 - 如需请创建新 key。
 
 ## 安全
 
-- Key 用于验证请求,不用于请求签名 — 只是 Bearer token 验证。
+- Key 用于验证请求,不用于请求签名 - 只是 Bearer token 验证。
 - 安全保管 key,不要提交到版本控制。
 - 每个 key 可独立撤销,可在不影响其他 key 的情况下轮换。
-- Key 在服务端以 hash 存储 — 丢失无法恢复。
+- Key 在服务端以 hash 存储 - 丢失无法恢复。

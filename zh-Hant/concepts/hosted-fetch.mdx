@@ -1,0 +1,126 @@
+---
+title: "Hosted fetch"
+description: "透過 Hermai 的 hosted execution API 執行已註冊端點。"
+---
+
+Hosted fetch 讓你透過 hosted API 呼叫已註冊的 Hermai 端點。送出 `site`、`endpoint` 和可選的 `params`;Hermai 會執行請求並回傳結構化結果。
+
+當你希望由 Hermai 進行正式執行,而不是下載 schema 後自行呼叫上游網站時,使用 hosted fetch。
+
+## 基本請求
+
+```bash
+export HERMAI_API_KEY="hm_sk_..."
+
+curl -sS -X POST "https://api.hermai.ai/v1/fetch" \
+  -H "Authorization: Bearer ${HERMAI_API_KEY}" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "site": "semanticscholar.org",
+    "endpoint": "get_paper",
+    "params": {
+      "paper_id": "ARXIV:1706.03762",
+      "fields": "paperId,externalIds,title,authors,venue,year,referenceCount,citationCount,openAccessPdf"
+    }
+  }'
+```
+
+回應:
+
+```json
+{
+  "success": true,
+  "data": {
+    "paperId": "204e3073870fae3d05bcbc2f6a8e263d9b72e776",
+    "title": "Attention is All you Need",
+    "year": 2017,
+    "citationCount": 183000
+  },
+  "meta": {
+    "site": "semanticscholar.org",
+    "endpoint": "get_paper",
+    "method": "GET",
+    "source": "gateway",
+    "latency_ms": 1234,
+    "credits_used": 1,
+    "credits_remaining": 499,
+    "cached": false
+  }
+}
+```
+
+## 請求 body
+
+| 欄位 | 類型 | 必填 | 說明 |
+|------|------|------|------|
+| `site` | string | 是 | 已註冊網站網域,例如 `semanticscholar.org` |
+| `endpoint` | string | 是 | schema 中的端點名稱,例如 `get_paper` |
+| `params` | object | 否 | 端點參數。值可以是字串、數字、布林值、陣列或物件。 |
+
+## 查找端點
+
+不需要 API key 即可瀏覽公開 schema 卡片:
+
+```bash
+curl "https://api.hermai.ai/v1/schemas/semanticscholar.org"
+```
+
+如果需要 URL template、請求細節和完整參數契約,可拉取完整 package:
+
+```bash
+curl -H "Authorization: Bearer ${HERMAI_API_KEY}" \
+     -H "X-Hermai-Intent: using Semantic Scholar metadata for citation enrichment" \
+     "https://api.hermai.ai/v1/schemas/semanticscholar.org/package"
+```
+
+如果希望自己的 agent 或伺服器直接呼叫上游網站,也可以使用 [catalog API](/zh-Hant/concepts/catalog)。
+
+## 引用元資料示例
+
+Hosted fetch 很適合論文和程式碼倉庫元資料工作流。常見已註冊路由包括:
+
+| 網站 | 示例端點 | 典型查詢 |
+|------|----------|----------|
+| `semanticscholar.org` | `get_paper` | Semantic Scholar、DOI、PubMed、Corpus 或 arXiv ID |
+| `openalex.org` | `works_search`, `get_work` | 按標題、DOI 或 OpenAlex ID 查詢作品 |
+| `crossref.org` | `filter_work_by_doi`, `get_work_by_doi` | DOI 元資料 |
+| `pubmed.ncbi.nlm.nih.gov` | `search_pubmed`, `summarize_pubmed` | PubMed 搜尋和 PMID 摘要 |
+| `europepmc.org` | `search`, `get_by_ext_id` | Europe PMC 文獻元資料 |
+| `datacite.org` | `get_doi`, `search_dois` | 資料集和預印本 DOI 元資料 |
+| `unpaywall.org` | `get_by_doi` | 開放取用狀態和連結 |
+| `huggingface.co` | `get_model_by_owner_repo`, `get_dataset_by_owner_repo`, `get_paper_repos` | Model、dataset 和論文相關 repo 元資料 |
+| `github.com` | `GetRepository`, `SearchRepositories` | 倉庫元資料 |
+| `sciencedirect.com`, `nature.com` | `metadata_by_doi_crossref`, `metadata_by_doi_openalex` | 透過 Crossref 或 OpenAlex 取得 DOI 元資料 |
+
+對於 ScienceDirect 或 Nature 這類出版商頁面,使用 DOI 元資料路由。Hermai 不需要抓取受保護的文章頁面即可回傳引用元資料。
+
+## 錯誤
+
+錯誤使用標準 API envelope:
+
+```json
+{
+  "success": false,
+  "error": {
+    "code": "MISSING_ENDPOINT",
+    "message": "The 'endpoint' field is required"
+  }
+}
+```
+
+常見錯誤碼包括:
+
+| Code | 含義 |
+|------|------|
+| `INVALID_JSON` | 請求 body 不是有效 JSON |
+| `MISSING_SITE` | 缺少 `site` |
+| `MISSING_ENDPOINT` | 缺少 `endpoint` |
+| `INSUFFICIENT_CREDITS` | 帳號沒有足夠 credits 用於 hosted execution |
+| `FETCH_FAILED` | Hermai 無法完成上游請求 |
+| `RESOURCE_UNAVAILABLE` | 端點需要的 hosted resource 暫不可用 |
+
+## 何時改用 catalog
+
+當你需要 schema recipe 並計畫自行執行請求時,使用 `GET /v1/catalog/{domain}` 或 `GET /v1/schemas/{site}/package`。
+
+當你希望 Hermai 執行支援的已註冊端點並回傳結果時,使用 `POST /v1/fetch`。

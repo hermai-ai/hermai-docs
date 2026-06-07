@@ -1,0 +1,80 @@
+---
+title: "MCP server"
+description: "把 Hermai schema 和 schema request 暴露為 Model Context Protocol tools。"
+---
+
+Hermai 提供獨立的 MCP server package。適合你的 agent runtime 支援本地 MCP tools,並希望 agent 查詢 schema 或提交缺失工作流請求,而不是抓網頁或手寫 API 呼叫。
+
+## 安裝
+
+直接用 npm 執行 MCP server:
+
+```bash
+npx -y hermai-mcp
+```
+
+或全域安裝:
+
+```bash
+npm install -g hermai-mcp
+hermai-mcp
+```
+
+只讀 catalog 查詢和公開 schema request intake 可在公開速率限制內匿名使用。若在 MCP client 環境中提供 `HERMAI_API_KEY` 或 `HERMAI_PLATFORM_KEY`,則使用 authenticated requests。
+
+## 通用 client 配置
+
+MCP client 的配置路徑因 runtime 而異,但 server entry 形狀如下:
+
+```json
+{
+  "mcpServers": {
+    "hermai": {
+      "command": "npx",
+      "args": ["-y", "hermai-mcp"],
+      "env": {
+        "HERMAI_API_KEY": "hm_sk_..."
+      }
+    }
+  }
+}
+```
+
+公開查詢和 schema request intake 不強制需要環境變數。
+
+## Tools
+
+### `lookup_schema`
+
+按 domain、task、category 或 verification state 搜尋 Hermai。抓取網站之前先用這個工具。
+
+### `list_public_schemas`
+
+瀏覽公開 schema,支援 `q`、`category`、`verified`、`sort`、`limit` 等可選過濾。
+
+### `submit_schema_request`
+
+提交缺失或脆弱工作流的六欄位 intake:
+
+- `domain`
+- `task`
+- `read_or_write`
+- `auth_shape`
+- `output_shape`
+- `failure_mode`
+
+可選上下文字段包括 `source_url`、`requester_agent`、`requester_contact` 和 `idempotency_key`。
+
+不要在 schema request 中包含 cookies、API keys、bearer tokens、私有 session 資料或憑據。
+
+### `classify_browser_workflow`
+
+在本地把自然語言需求分類為 `direct_api`、`hidden_endpoint`、`browser_only`、`needs_owner` 或 `needs_more_fields`。用於決定查詢現有 schema、提交 request,還是向使用者補齊 intake 欄位。
+
+### `check_schema_request_status`
+
+按 id 查詢之前提交的 schema request 狀態。
+
+## 何時使用 MCP
+
+當 agent runtime 可以執行本地 tool server 時,使用 MCP。當 runtime 無法執行 MCP 時,使用直接 HTTP API。需要瀏覽器 cookie import、session bootstrap 或 signed write execution 等終端流程時,直接使用 CLI 命令。

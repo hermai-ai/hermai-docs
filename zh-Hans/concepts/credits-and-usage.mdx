@@ -5,14 +5,14 @@ description: "速率限制、credits,以及当前版本的用量机制。"
 
 ## 速率限制
 
-所有 API 请求都有速率限制。限制取决于是否已验证:
+Runtime API 请求有速率限制。主要计数端点列在下方,限制取决于是否已验证:
 
 | 层级 | 每小时 | 每天 | 身份跟踪方式 |
 |------|-------|------|------------|
 | 匿名(无 API key) | 5 | — | 按 IP 地址 |
-| 已注册(免费) | 50 | 500 | 按用户账号 |
+| 已注册(免费) | 1,000 | 3,000 | 按用户账号 |
 
-超过限制会收到 `429 Too Many Requests`。每个响应的 `X-Rate-Limit-Remaining` header 会告诉 agent 当前窗口还剩多少次请求。
+免费账号还有每分钟 20 次的突发限制。超过任何限制都会收到 `429 Too Many Requests`。
 
 获取 API key 免费 — 到 [hermai.ai/register](https://hermai.ai/register) 注册并在 dashboard 创建。
 
@@ -23,23 +23,36 @@ Credits 通过贡献与社区活动赚取:
 | 行为 | Credits |
 |------|---------|
 | 第一次发起请求 | +50 |
-| 在 GitHub 上 star [hermai-cli](https://github.com/hermai-ai/hermai-cli) | +100 |
 | 推荐朋友 | 每位受邀 +100 |
 | 贡献 schema | 每个网站 +50 |
 
-Credits 会累积在账号中,**当托管执行上线时会成为你的起始余额**。在当前版本没有计费 — 只要在上方速率限制内,所有访问都免费。
+Credits 会累积在账号中,并显示在 dashboard。
+
+Hosted fetch 使用 credits。响应的 `meta` 对象包含 `credits_used` 和 `credits_remaining`,方便 agent 跟踪用量:
+
+```json
+{
+  "success": true,
+  "data": {},
+  "meta": {
+    "credits_used": 1,
+    "credits_remaining": 499
+  }
+}
+```
 
 ## 哪些算一次请求?
 
 以下端点每次调用都计入速率限制:
 
 - `GET /v1/catalog/{domain}`(catalog 查询)
-- `GET /v1/schemas/{site}/package`(schema 下载)
+- `POST /v1/fetch`(hosted execution)
 
 以下**不**计入速率限制:
 
 - `GET /v1/schemas`(浏览/搜索 registry)
 - `GET /v1/schemas/{site}`(公开 schema 卡片)
+- `GET /v1/schemas/{site}/package`(schema 下载)
 - `GET /v1/trending`、`GET /v1/categories`(探索接口)
 - `POST /v1/schemas`(推送 schema)
 - `GET /v1/health`
@@ -54,6 +67,6 @@ Credits 会累积在账号中,**当托管执行上线时会成为你的起始余
 - **已获得 credits** — 累计的 credits 余额
 - **活动记录** — 每条请求的 URL、状态、延迟、时间戳
 
-## 当前版本没有计费
+## 计费和限制
 
-没有付费方案、没有发票、不需要信用卡。速率限制是唯一的关卡。当托管执行上线时,credits 会转换为可用余额供 proxy 请求使用 — 早期累积 credits 的贡献者会有领先优势。
+你可以不绑定信用卡就注册并创建 API key。速率限制和 credits 控制自助用量。如果账号没有足够 credits 用于 hosted execution,`POST /v1/fetch` 会返回 `402 INSUFFICIENT_CREDITS`。

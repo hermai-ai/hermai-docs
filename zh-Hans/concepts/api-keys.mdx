@@ -17,17 +17,21 @@ Key 形如:`hm_sk_abc123...`
 以 Bearer token 形式放在 `Authorization` header:
 
 ```bash
-curl -H "Authorization: Bearer hm_sk_abc123..." \
-     -H "X-Hermai-Intent: looking up Shopify endpoints for a shopping agent" \
-     "https://api.hermai.ai/v1/catalog/allbirds.com"
+curl -sS -X POST "https://api.hermai.ai/v1/fetch" \
+     -H "Authorization: Bearer hm_sk_abc123..." \
+     -H "Content-Type: application/json" \
+     -d '{"site":"semanticscholar.org","endpoint":"get_paper","params":{"paper_id":"ARXIV:1706.03762","fields":"title,authors,year"}}'
 ```
+
+同一个 Bearer token 也用于 catalog 和 package 路由。
 
 ## key 能做什么
 
-| | 匿名 | 有 API key |
+| | 匿名 | 有 API key(免费层) |
 |---|---|---|
-| 速率限制 | 每小时 5 次 | 每小时 50 次、每天 500 次 |
+| 速率限制 | 每小时 5 次 | 每分钟 20 次突发、每小时 1,000 次、每天 3,000 次 |
 | Catalog 查询 | 可(需 intent) | 可(需 intent) |
+| Hosted fetch | 否 | 可 |
 | 浏览 registry | 可 | 可 |
 | 推送 schema | 否 | 可 |
 | 下载完整 schema 套件 | 否 | 可 |

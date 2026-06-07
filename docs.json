@@ -50,9 +50,11 @@
             "group": "核心概念",
             "pages": [
               "zh-Hant/concepts/how-hermai-works",
+              "zh-Hant/concepts/hosted-fetch",
               "zh-Hant/concepts/schemas",
               "zh-Hant/concepts/catalog",
               "zh-Hant/concepts/actions",
+              "zh-Hant/concepts/mcp",
               "zh-Hant/concepts/credits-and-usage",
               "zh-Hant/concepts/api-keys"
             ]
@@ -73,9 +75,11 @@
             "group": "核心概念",
             "pages": [
               "zh-Hans/concepts/how-hermai-works",
+              "zh-Hans/concepts/hosted-fetch",
               "zh-Hans/concepts/schemas",
               "zh-Hans/concepts/catalog",
               "zh-Hans/concepts/actions",
+              "zh-Hans/concepts/mcp",
               "zh-Hans/concepts/credits-and-usage",
               "zh-Hans/concepts/api-keys"
             ]

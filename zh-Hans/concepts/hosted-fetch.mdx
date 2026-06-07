@@ -1,0 +1,126 @@
+---
+title: "Hosted fetch"
+description: "通过 Hermai 的 hosted execution API 运行已注册端点。"
+---
+
+Hosted fetch 让你通过 hosted API 调用已注册的 Hermai 端点。发送 `site`、`endpoint` 和可选的 `params`;Hermai 会执行请求并返回结构化结果。
+
+当你希望由 Hermai 进行生产执行,而不是下载 schema 后自行调用上游网站时,使用 hosted fetch。
+
+## 基本请求
+
+```bash
+export HERMAI_API_KEY="hm_sk_..."
+
+curl -sS -X POST "https://api.hermai.ai/v1/fetch" \
+  -H "Authorization: Bearer ${HERMAI_API_KEY}" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "site": "semanticscholar.org",
+    "endpoint": "get_paper",
+    "params": {
+      "paper_id": "ARXIV:1706.03762",
+      "fields": "paperId,externalIds,title,authors,venue,year,referenceCount,citationCount,openAccessPdf"
+    }
+  }'
+```
+
+响应:
+
+```json
+{
+  "success": true,
+  "data": {
+    "paperId": "204e3073870fae3d05bcbc2f6a8e263d9b72e776",
+    "title": "Attention is All you Need",
+    "year": 2017,
+    "citationCount": 183000
+  },
+  "meta": {
+    "site": "semanticscholar.org",
+    "endpoint": "get_paper",
+    "method": "GET",
+    "source": "gateway",
+    "latency_ms": 1234,
+    "credits_used": 1,
+    "credits_remaining": 499,
+    "cached": false
+  }
+}
+```
+
+## 请求体
+
+| 字段 | 类型 | 必填 | 描述 |
+|------|------|------|------|
+| `site` | string | 是 | 已注册站点域名,例如 `semanticscholar.org` |
+| `endpoint` | string | 是 | schema 中的端点名称,例如 `get_paper` |
+| `params` | object | 否 | 端点参数。值可以是字符串、数字、布尔值、数组或对象。 |
+
+## 查找端点
+
+无需 API key 即可浏览公开 schema 卡片:
+
+```bash
+curl "https://api.hermai.ai/v1/schemas/semanticscholar.org"
+```
+
+如果需要 URL template、请求细节和完整参数契约,可拉取完整 package:
+
+```bash
+curl -H "Authorization: Bearer ${HERMAI_API_KEY}" \
+     -H "X-Hermai-Intent: using Semantic Scholar metadata for citation enrichment" \
+     "https://api.hermai.ai/v1/schemas/semanticscholar.org/package"
+```
+
+如果希望自己的 agent 或服务器直接调用上游网站,也可以使用 [catalog API](/zh-Hans/concepts/catalog)。
+
+## 引用元数据示例
+
+Hosted fetch 很适合论文和代码仓库元数据工作流。常见已注册路由包括:
+
+| 站点 | 示例端点 | 典型查询 |
+|------|----------|----------|
+| `semanticscholar.org` | `get_paper` | Semantic Scholar、DOI、PubMed、Corpus 或 arXiv ID |
+| `openalex.org` | `works_search`, `get_work` | 按标题、DOI 或 OpenAlex ID 查询作品 |
+| `crossref.org` | `filter_work_by_doi`, `get_work_by_doi` | DOI 元数据 |
+| `pubmed.ncbi.nlm.nih.gov` | `search_pubmed`, `summarize_pubmed` | PubMed 搜索和 PMID 摘要 |
+| `europepmc.org` | `search`, `get_by_ext_id` | Europe PMC 文献元数据 |
+| `datacite.org` | `get_doi`, `search_dois` | 数据集和预印本 DOI 元数据 |
+| `unpaywall.org` | `get_by_doi` | 开放获取状态和链接 |
+| `huggingface.co` | `get_model_by_owner_repo`, `get_dataset_by_owner_repo`, `get_paper_repos` | Model、dataset 和论文相关 repo 元数据 |
+| `github.com` | `GetRepository`, `SearchRepositories` | 仓库元数据 |
+| `sciencedirect.com`, `nature.com` | `metadata_by_doi_crossref`, `metadata_by_doi_openalex` | 通过 Crossref 或 OpenAlex 获取 DOI 元数据 |
+
+对于 ScienceDirect 或 Nature 这类出版商页面,使用 DOI 元数据路由。Hermai 不需要抓取受保护的文章页面即可返回引用元数据。
+
+## 错误
+
+错误使用标准 API envelope:
+
+```json
+{
+  "success": false,
+  "error": {
+    "code": "MISSING_ENDPOINT",
+    "message": "The 'endpoint' field is required"
+  }
+}
+```
+
+常见错误码包括:
+
+| Code | 含义 |
+|------|------|
+| `INVALID_JSON` | 请求体不是有效 JSON |
+| `MISSING_SITE` | 缺少 `site` |
+| `MISSING_ENDPOINT` | 缺少 `endpoint` |
+| `INSUFFICIENT_CREDITS` | 账号没有足够 credits 用于 hosted execution |
+| `FETCH_FAILED` | Hermai 无法完成上游请求 |
+| `RESOURCE_UNAVAILABLE` | 端点需要的 hosted resource 暂不可用 |
+
+## 何时改用 catalog
+
+当你需要 schema recipe 并计划自行执行请求时,使用 `GET /v1/catalog/{domain}` 或 `GET /v1/schemas/{site}/package`。
+
+当你希望 Hermai 执行支持的已注册端点并返回结果时,使用 `POST /v1/fetch`。

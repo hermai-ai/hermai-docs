@@ -10,9 +10,9 @@ All API requests are rate-limited. Limits depend on whether you're authenticated
 | Tier | Per hour | Per day | How identity is tracked |
 |------|----------|---------|------------------------|
 | Anonymous (no API key) | 5 | — | By IP address |
-| Registered (free) | 50 | 500 | By user account |
+| Registered (free) | 1,000 | 3,000 | By user account |
 
-If you exceed the limit, you'll get a `429 Too Many Requests` response. The `X-Rate-Limit-Remaining` header on every response tells your agent how many requests it has left in the current window.
+Free accounts also have a 20 requests/minute burst cap. If you exceed any limit, you'll get a `429 Too Many Requests` response.
 
 Getting an API key is free — [sign up](https://hermai.ai/register) and create one in the dashboard.
 
@@ -23,7 +23,6 @@ Credits are earned through contributions and community activity:
 | Action | Credits |
 |--------|---------|
 | Make your first request | +50 |
-| Star [hermai-cli](https://github.com/hermai-ai/hermai-cli) on GitHub | +100 |
 | Refer a friend | +100 per invite |
 | Contribute a schema | +50 per site |
 
@@ -47,13 +46,13 @@ Hosted fetch uses credits. The response `meta` object includes `credits_used` an
 Every call to these endpoints counts against your rate limit:
 
 - `GET /v1/catalog/{domain}` (catalog lookup)
-- `GET /v1/schemas/{site}/package` (schema download)
 - `POST /v1/fetch` (hosted execution)
 
 These do **not** count against rate limits:
 
 - `GET /v1/schemas` (browse/search the registry)
 - `GET /v1/schemas/{site}` (public schema card)
+- `GET /v1/schemas/{site}/package` (schema download)
 - `GET /v1/trending`, `GET /v1/categories` (discovery surfaces)
 - `POST /v1/schemas` (pushing a schema)
 - `GET /v1/health`

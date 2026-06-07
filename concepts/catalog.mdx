@@ -59,7 +59,7 @@ GET /v1/catalog/allbirds.com?intent=looking+up+product+prices+for+a+comparison+a
 X-Hermai-Intent: looking up product prices for a comparison agent
 ```
 
-**Requirements**: at least 20 characters, at least 5 distinct words. Requests without a valid intent get a `400 INTENT_REQUIRED` error.
+**Requirements**: at least 20 characters, at least 5 distinct words. Requests without a valid intent get a `400` error (`INTENT_REQUIRED`, `INTENT_TOO_SHORT`, or `INTENT_TOO_FEW_WORDS`).
 
 **Why we require it**: intent data drives which schemas we prioritize for verification, helps match agents to the right endpoints, and acts as a lightweight anti-spam gate.
 
@@ -78,9 +78,9 @@ Top-level categories include: `commerce`, `travel`, `jobs`, `social`, `media`, `
 | Tier | Per hour | Per day |
 |------|----------|---------|
 | Anonymous (no API key) | 5 | — |
-| Registered (free) | 50 | 500 |
+| Registered (free) | 1,000 | 3,000 |
 
-Anonymous requests are rate-limited by IP. Registered requests are rate-limited by user account. The response includes an `X-Rate-Limit-Remaining` header so your agent can pace itself.
+Anonymous requests are rate-limited by IP. Registered requests are rate-limited by user account. Free accounts also have a 20 requests/minute burst cap. Exceeding a limit returns `429 Too Many Requests`.
 
 ## Browsing the registry
 

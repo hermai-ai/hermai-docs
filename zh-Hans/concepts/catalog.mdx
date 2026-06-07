@@ -49,7 +49,7 @@ curl -H "Authorization: Bearer hm_sk_..." \
 
 ## Intent
 
-每个 catalog 请求都必须附上 **intent** — 以自然语言说明 agent 为什么需要这份 schema。可用 query 参数或 header 传递:
+每个 catalog 请求都必须附上 **intent** - 以自然语言说明 agent 为什么需要这份 schema。可用 query 参数或 header 传递:
 
 ```bash
 # Query 参数
@@ -77,7 +77,7 @@ curl "https://api.hermai.ai/v1/categories"
 
 | 层级 | 每小时 | 每天 |
 |------|-------|------|
-| 匿名(无 API key) | 5 | — |
+| 匿名(无 API key) | 5 | - |
 | 已注册(免费) | 1,000 | 3,000 |
 
 匿名请求按 IP 限流,已注册请求按账号限流。免费账号还有每分钟 20 次的突发限制。超过限制会返回 `429 Too Many Requests`。
@@ -109,7 +109,7 @@ GET /v1/schemas/allbirds.com
 GET /v1/schemas/allbirds.com/versions
 ```
 
-这些浏览端点**不需要** intent — 它们是探索用的接口,并非 agent 运行时的调用。
+这些浏览端点**不需要** intent - 它们是探索用的接口,并非 agent 运行时的调用。
 
 ## 托管执行呢?
 

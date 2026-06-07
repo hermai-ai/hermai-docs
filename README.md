@@ -4,7 +4,7 @@ Customer-facing documentation for [Hermai](https://hermai.ai), hosted at [docs.h
 
 ## What Hermai is
 
-Hermai is a community-driven schema registry for AI agents. Developers discover and contribute website API schemas; agents consume them to get structured JSON from any site — no browser, no HTML parsing, no wasted tokens.
+Hermai is a community-driven schema registry for website APIs. Developers contribute schemas for site workflows. Callers use those schemas to get structured JSON without rediscovering the same site.
 
 ## Layout
 
@@ -12,7 +12,7 @@ Hermai is a community-driven schema registry for AI agents. Developers discover 
 .
 ├── docs.json             Mintlify config (nav, theme, colours, logo, navbar)
 ├── index.mdx             Landing page
-├── quickstart.mdx        Sign up → API key → first query → contribute
+├── quickstart.mdx        Sign up, create an API key, run a fetch, contribute
 ├── concepts/
 │   ├── how-hermai-works.mdx   Mental model: CLI discovery, registry lookup, hosted fetch
 │   ├── hosted-fetch.mdx       Hosted execution API
@@ -47,6 +47,6 @@ See [CONTRIBUTING.md](CONTRIBUTING.md) for editing guidelines and local developm
 
 ## Links
 
-- [hermai.ai](https://hermai.ai) — Homepage
-- [docs.hermai.ai](https://docs.hermai.ai) — Live docs
-- [hermai-cli](https://github.com/hermai-ai/hermai-cli) — Open-source discovery CLI (AGPL-3.0)
+- [hermai.ai](https://hermai.ai): Homepage
+- [docs.hermai.ai](https://docs.hermai.ai): Live docs
+- [hermai-cli](https://github.com/hermai-ai/hermai-cli): Open-source discovery CLI (AGPL-3.0)

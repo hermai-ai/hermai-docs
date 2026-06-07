@@ -1,11 +1,11 @@
 ---
 title: "Introduction"
-description: "Hermai is a community-driven schema registry for AI agents."
+description: "Hermai is a community-driven schema registry for website APIs."
 ---
 
-Hermai is a schema registry and hosted fetch API for AI agents. Point an agent at any domain in the registry to find callable endpoints, then either execute the endpoint yourself or call Hermai's hosted `/v1/fetch` API for managed execution.
+Hermai is a schema registry and hosted fetch API for website workflows. Look up a domain to find callable endpoints, then either execute the endpoint yourself or call Hermai's hosted `/v1/fetch` API.
 
-Think of it as **HuggingFace, but for website APIs**.
+Use it as a shared package index for website APIs.
 
 ## How it works
 
@@ -14,7 +14,7 @@ Think of it as **HuggingFace, but for website APIs**.
     Use the discovery toolkit (`hermai detect`, `probe`, `extract`, `intercept`) to document a site's endpoints, then `hermai registry push` to add them to the catalog.
   </Card>
   <Card title="Look up from the registry" icon="magnifying-glass">
-    Call `GET /v1/catalog/{domain}` to get all known endpoints for a site. The platform serves schemas contributed by the community — instant, structured, no discovery cost.
+    Call `GET /v1/catalog/{domain}` to get known endpoints for a site. Community schemas let callers reuse prior discovery work.
   </Card>
   <Card title="Run hosted fetch" icon="cloud-arrow-down">
     Call `POST /v1/fetch` with a site, endpoint, and params. Hermai executes the registered endpoint and returns structured JSON.
@@ -22,17 +22,17 @@ Think of it as **HuggingFace, but for website APIs**.
 </CardGroup>
 
 <Tip>
-  **Using an AI agent?** Install the [Hermai skills](https://github.com/hermai-ai/hermai-skills) with `npx skills add hermai-ai/hermai-skills` — Claude Code, Codex, Cursor, and other agents will know how to call the registry and contribute schemas on your behalf.
+  **Using Claude Code, Codex, Cursor, or another coding agent?** Install the [Hermai skills](https://github.com/hermai-ai/hermai-skills) with `npx skills add hermai-ai/hermai-skills` to give it the registry workflow.
 </Tip>
 
 ## Start here
 
 <CardGroup cols={2}>
   <Card title="Quickstart" icon="rocket" href="/quickstart">
-    Sign up, get an API key, and query your first schema in 2 minutes.
+    Create an API key and run one hosted fetch.
   </Card>
   <Card title="How Hermai works" icon="wand-magic-sparkles" href="/concepts/how-hermai-works">
-    The mental model: contributors discover, agents consume.
+    What runs locally, what Hermai stores, and when hosted fetch runs.
   </Card>
   <Card title="Hosted fetch" icon="cloud-arrow-down" href="/concepts/hosted-fetch">
     Run registered endpoints through Hermai.
@@ -41,7 +41,7 @@ Think of it as **HuggingFace, but for website APIs**.
     What schemas are, how to contribute them, and the verified badge.
   </Card>
   <Card title="Catalog" icon="compass" href="/concepts/catalog">
-    The lookup API that agents call at runtime.
+    The lookup API for runtime schema access.
   </Card>
   <Card title="Actions" icon="hand-pointer" href="/concepts/actions">
     Read and write actions that schemas expose.
@@ -53,4 +53,4 @@ Think of it as **HuggingFace, but for website APIs**.
 
 ## Open source
 
-The [hermai-cli](https://github.com/hermai-ai/hermai-cli) is open source under AGPL-3.0. You can run the full discovery engine locally without an account. The platform registry is the community layer on top — browse, search, and consume schemas that others have contributed.
+The [hermai-cli](https://github.com/hermai-ai/hermai-cli) is open source under AGPL-3.0. You can run discovery locally without an account. The platform registry adds browse, search, and hosted fetch on top.

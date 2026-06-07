@@ -1,17 +1,17 @@
 ---
 title: "How Hermai works"
-description: "Contributors discover, agents consume. The mental model in two minutes."
+description: "What runs locally, what the registry stores, and when hosted fetch runs."
 ---
 
-## The split
+## The pieces
 
 Hermai has three pieces:
 
-1. **The CLI** ([hermai-cli](https://github.com/hermai-ai/hermai-cli), open source) — runs on your machine. Contributors use it to inspect a site and compose a schema describing its endpoints, then push the schema to the registry.
+1. **The CLI** ([hermai-cli](https://github.com/hermai-ai/hermai-cli), open source) runs on your machine. Contributors use it to inspect a site, write a schema, and push that schema to the registry.
 
-2. **The registry** (`api.hermai.ai`) — stores and serves schemas that contributors have pushed. Agents query it at runtime to get endpoint names, parameters, URL templates, and response shapes for any domain in the registry.
+2. **The registry** (`api.hermai.ai`) stores and serves schemas that contributors have pushed. Callers query it at runtime to get endpoint names, parameters, URL templates, and response shapes.
 
-3. **Hosted fetch** (`POST /v1/fetch`) — executes a registered endpoint through Hermai and returns the result. Use it when you want Hermai to run the request instead of executing the schema yourself.
+3. **Hosted fetch** (`POST /v1/fetch`) executes a registered endpoint through Hermai and returns the result. Use it when you want Hermai to run the request.
 
 ```
 Contributor                        Platform                         Agent
@@ -32,14 +32,14 @@ Contributor                        Platform                         Agent
 
 ## What the CLI does
 
-The CLI ships a deterministic toolkit — each subcommand does one thing and emits JSON the next step can consume:
+The CLI ships deterministic commands. Each subcommand does one job and emits JSON the next step can consume:
 
-- **`hermai detect`** — classify the site's platform (Shopify, WordPress, Next.js, etc.) and detect anti-bot systems.
-- **`hermai wellknown`** — probe `robots.txt`, sitemaps, RSS feeds, and GraphQL endpoints.
-- **`hermai probe --body | hermai extract`** — pull embedded data from a page. Recognises 13 SSR/hydration patterns (`__NEXT_DATA__`, `ytInitialData`, `__APOLLO_STATE__`, `SIGI_STATE`, and more).
-- **`hermai intercept`** — launch a browser and capture real XHR traffic, useful for dynamic features (search, cart, filters).
-- **`hermai introspect`** — fetch a GraphQL schema.
-- **`hermai session bootstrap`** — warm a browser session for anti-bot sites.
+- **`hermai detect`** classifies the site's platform (Shopify, WordPress, Next.js, etc.) and detects anti-bot systems.
+- **`hermai wellknown`** probes `robots.txt`, sitemaps, RSS feeds, and GraphQL endpoints.
+- **`hermai probe --body | hermai extract`** pulls embedded data from a page. It recognizes 13 SSR/hydration patterns (`__NEXT_DATA__`, `ytInitialData`, `__APOLLO_STATE__`, `SIGI_STATE`, and more).
+- **`hermai intercept`** launches a browser and captures real XHR traffic for dynamic features such as search, cart, and filters.
+- **`hermai introspect`** fetches a GraphQL schema.
+- **`hermai session bootstrap`** warms a browser session for anti-bot sites.
 
 The contributor composes a schema JSON file from what they find and pushes it with `hermai registry push`. No LLM key or managed service is required.
 
@@ -47,10 +47,10 @@ The contributor composes a schema JSON file from what they find and pushes it wi
 
 The platform exposes both lookup and hosted execution:
 
-- **`GET /v1/catalog/{domain}`** — returns all endpoints and actions for a domain. This is the main agent-facing endpoint. Requires an [intent](/concepts/catalog#intent) describing why you need it.
-- **`GET /v1/schemas`** — browse and search the full registry.
-- **`POST /v1/fetch`** — execute a registered endpoint through Hermai. Requires an API key.
-- **`POST /v1/schemas`** — push a new schema. Validated against the [intent taxonomy](/concepts/catalog#intent-taxonomy) and published immediately.
+- **`GET /v1/catalog/{domain}`** returns all endpoints and actions for a domain. This is the main runtime lookup endpoint. It requires an [intent](/concepts/catalog#intent) describing why you need it.
+- **`GET /v1/schemas`** browses and searches the full registry.
+- **`POST /v1/fetch`** executes a registered endpoint through Hermai. It requires an API key.
+- **`POST /v1/schemas`** pushes a new schema. The registry validates it against the [intent taxonomy](/concepts/catalog#intent-taxonomy) and publishes it immediately.
 
 You can still use Hermai as a registry only: pull the schema package, then execute the upstream request from your own infrastructure. Hosted fetch is the managed path when you want Hermai to run a registered endpoint.
 
@@ -58,7 +58,7 @@ You can still use Hermai as a registry only: pull the schema package, then execu
 
 Discovery is expensive (browser + LLM + time). Lookup is cheap (database read). By separating them:
 
-- **Contributors** pay the discovery cost once, locally, on their own machine
-- **Every agent after them** gets instant structured data for free
+- **Contributors** do discovery once, locally, on their own machine
+- **Later callers** reuse the schema instead of repeating discovery
 - **The registry** keeps discovery separate from runtime execution
-- **No vendor lock-in** — the CLI is open source (AGPL-3.0) and works offline
+- **No vendor lock-in** because the CLI is open source (AGPL-3.0) and works offline

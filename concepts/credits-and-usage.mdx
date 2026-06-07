@@ -9,12 +9,12 @@ Runtime API requests are rate-limited. The main counted endpoints are listed bel
 
 | Tier | Per hour | Per day | How identity is tracked |
 |------|----------|---------|------------------------|
-| Anonymous (no API key) | 5 | — | By IP address |
+| Anonymous (no API key) | 5 | None | By IP address |
 | Registered (free) | 1,000 | 3,000 | By user account |
 
 Free accounts also have a 20 requests/minute burst cap. If you exceed any limit, you'll get a `429 Too Many Requests` response.
 
-Getting an API key is free — [sign up](https://hermai.ai/register) and create one in the dashboard.
+Getting an API key is free. [Sign up](https://hermai.ai/register) and create one in the dashboard.
 
 ## Credits
 
@@ -61,11 +61,11 @@ These do **not** count against rate limits:
 
 Your [dashboard](https://hermai.ai/dashboard) shows:
 
-- **Requests today** — how many calls you've made
-- **Schema hit rate** — how often your lookups found a cached schema
-- **Average latency** — response time across your requests
-- **Credits earned** — your accumulated credit balance
-- **Activity logs** — per-request detail with URL, status, latency, and timestamp
+- **Requests today:** how many calls you've made
+- **Schema hit rate:** how often your lookups found a cached schema
+- **Average latency:** response time across your requests
+- **Credits earned:** your accumulated credit balance
+- **Activity logs:** per-request detail with URL, status, latency, and timestamp
 
 ## Billing and limits
 

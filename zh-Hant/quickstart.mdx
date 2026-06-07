@@ -22,10 +22,10 @@ hm_sk_abc123...
 透過 Hermai 呼叫一個已註冊端點:
 
 ```bash
-export HERMAI_API_KEY="hm_sk_abc123..."
+export HERMAI_KEY="hm_sk_abc123..."
 
 curl -sS -X POST "https://api.hermai.ai/v1/fetch" \
-  -H "Authorization: Bearer ${HERMAI_API_KEY}" \
+  -H "Authorization: Bearer ${HERMAI_KEY}" \
   -H "Content-Type: application/json" \
   -d '{
     "site": "semanticscholar.org",
@@ -79,11 +79,11 @@ curl "https://api.hermai.ai/v1/schemas/semanticscholar.org"
 如果希望自己的 agent 或伺服器直接執行請求,可以帶 intent 拉取 catalog 或完整 package:
 
 ```bash
-curl -H "Authorization: Bearer ${HERMAI_API_KEY}" \
+curl -H "Authorization: Bearer ${HERMAI_KEY}" \
      -H "X-Hermai-Intent: looking up product endpoints on allbirds.com to build a price comparison agent" \
      "https://api.hermai.ai/v1/catalog/allbirds.com"
 
-curl -H "Authorization: Bearer ${HERMAI_API_KEY}" \
+curl -H "Authorization: Bearer ${HERMAI_KEY}" \
      -H "X-Hermai-Intent: downloading Semantic Scholar metadata routes for citation enrichment" \
      "https://api.hermai.ai/v1/schemas/semanticscholar.org/package"
 ```

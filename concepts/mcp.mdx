@@ -20,7 +20,7 @@ npm install -g hermai-mcp
 hermai-mcp
 ```
 
-Read-only catalog lookup and public schema request intake work anonymously within public rate limits. Authenticated requests use `HERMAI_API_KEY` or `HERMAI_PLATFORM_KEY` if you provide it in the MCP client environment.
+Read-only catalog lookup and public schema request intake work anonymously within public rate limits. Authenticated requests use `HERMAI_KEY` or `HERMAI_PLATFORM_KEY` if you provide it in the MCP client environment.
 
 ## Generic client config
 
@@ -33,7 +33,7 @@ MCP client config paths vary by runtime, but the server entry has this shape:
       "command": "npx",
       "args": ["-y", "hermai-mcp"],
       "env": {
-        "HERMAI_API_KEY": "hm_sk_..."
+        "HERMAI_KEY": "hm_sk_..."
       }
     }
   }

@@ -10,10 +10,10 @@ Hosted fetch 让你通过 hosted API 调用已注册的 Hermai 端点。发送 `
 ## 基本请求
 
 ```bash
-export HERMAI_API_KEY="hm_sk_..."
+export HERMAI_KEY="hm_sk_..."
 
 curl -sS -X POST "https://api.hermai.ai/v1/fetch" \
-  -H "Authorization: Bearer ${HERMAI_API_KEY}" \
+  -H "Authorization: Bearer ${HERMAI_KEY}" \
   -H "Content-Type: application/json" \
   -d '{
     "site": "semanticscholar.org",
@@ -68,7 +68,7 @@ curl "https://api.hermai.ai/v1/schemas/semanticscholar.org"
 如果需要 URL template、请求细节和完整参数契约,可拉取完整 package:
 
 ```bash
-curl -H "Authorization: Bearer ${HERMAI_API_KEY}" \
+curl -H "Authorization: Bearer ${HERMAI_KEY}" \
      -H "X-Hermai-Intent: using Semantic Scholar metadata for citation enrichment" \
      "https://api.hermai.ai/v1/schemas/semanticscholar.org/package"
 ```

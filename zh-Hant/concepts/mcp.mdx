@@ -20,7 +20,7 @@ npm install -g hermai-mcp
 hermai-mcp
 ```
 
-只讀 catalog 查詢和公開 schema request intake 可在公開速率限制內匿名使用。若在 MCP client 環境中提供 `HERMAI_API_KEY` 或 `HERMAI_PLATFORM_KEY`,則使用 authenticated requests。
+只讀 catalog 查詢和公開 schema request intake 可在公開速率限制內匿名使用。若在 MCP client 環境中提供 `HERMAI_KEY` 或 `HERMAI_PLATFORM_KEY`,則使用 authenticated requests。
 
 ## 通用 client 配置
 
@@ -33,7 +33,7 @@ MCP client 的配置路徑因 runtime 而異,但 server entry 形狀如下:
       "command": "npx",
       "args": ["-y", "hermai-mcp"],
       "env": {
-        "HERMAI_API_KEY": "hm_sk_..."
+        "HERMAI_KEY": "hm_sk_..."
       }
     }
   }

@@ -20,7 +20,7 @@ npm install -g hermai-mcp
 hermai-mcp
 ```
 
-Read-only catalog lookup and public schema request intake work anonymously within public rate limits. Authenticated requests use `HERMAI_API_KEY` or `HERMAI_PLATFORM_KEY` if you provide it in the MCP client environment.
+Read-only catalog lookup and public schema request intake work anonymously within public rate limits. Authenticated requests use `HERMAI_API_KEY` or `HERMAI_PLATFORM_KEY` if you provide it in the MCP client environment. Providing a key also unlocks the `fetch_schema` execution tool, which runs hosted `/v1/fetch` and consumes credits.
 
 ## Generic client config
 
@@ -51,6 +51,18 @@ Search Hermai by domain, task, category, or verification state. Use this before 
 ### `list_public_schemas`
 
 Browse public schemas with optional filters such as `q`, `category`, `verified`, `sort`, and `limit`.
+
+### `fetch_schema`
+
+Execute a registered schema through hosted `/v1/fetch` and return live data. This tool is only exposed when `HERMAI_API_KEY` (or `HERMAI_PLATFORM_KEY`) is set, and it **consumes Hermai credits per call**.
+
+Resolve the exact `site` and `endpoint` with `lookup_schema` first, then call:
+
+- `site` — registered host, for example `wegmans.com`.
+- `endpoint` — endpoint name from the schema, for example `product_search`. Case-sensitive.
+- `params` — optional endpoint parameters as key/value pairs.
+
+The result includes the upstream `data` plus a meta summary (`credits_used`, `credits_remaining`, `latency_ms`, `cached`); failed fetches surface the API `code` and `message`. Use it for read workflows only. Write and owner-approved workflows go through the Hermai CLI's signed-write path. Set `HERMAI_FETCH_TIMEOUT_MS` to override the default 120s timeout.
 
 ### `submit_schema_request`
 

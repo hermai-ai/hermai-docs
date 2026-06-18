@@ -20,7 +20,7 @@ npm install -g hermai-mcp
 hermai-mcp
 ```
 
-只读 catalog 查询和公开 schema request intake 可在公开速率限制内匿名使用。若在 MCP client 环境中提供 `HERMAI_API_KEY` 或 `HERMAI_PLATFORM_KEY`,则使用 authenticated requests。
+只读 catalog 查询和公开 schema request intake 可在公开速率限制内匿名使用。若在 MCP client 环境中提供 `HERMAI_API_KEY` 或 `HERMAI_PLATFORM_KEY`,则使用 authenticated requests。提供 key 还会启用 `fetch_schema` 执行工具,它运行托管的 `/v1/fetch` 并消耗 credits。
 
 ## 通用 client 配置
 
@@ -51,6 +51,18 @@ MCP client 的配置路径因 runtime 而异,但 server entry 形状如下:
 ### `list_public_schemas`
 
 浏览公开 schema,支持 `q`、`category`、`verified`、`sort`、`limit` 等可选过滤。
+
+### `fetch_schema`
+
+通过托管的 `/v1/fetch` 执行已注册的 schema 并返回实时数据。仅当设置了 `HERMAI_API_KEY`(或 `HERMAI_PLATFORM_KEY`)时才会暴露此工具,且**每次调用都会消耗 Hermai credits**。
+
+先用 `lookup_schema` 解析出确切的 `site` 和 `endpoint`,然后调用:
+
+- `site` — 已注册的 host,例如 `wegmans.com`。
+- `endpoint` — schema 中的 endpoint 名称,例如 `product_search`。区分大小写。
+- `params` — 可选的 endpoint 参数,键值对形式。
+
+返回结果包含上游 `data` 以及一个 meta 摘要(`credits_used`、`credits_remaining`、`latency_ms`、`cached`);失败的 fetch 会返回 API 的 `code` 和 `message`。仅用于读取工作流。写入和需所有者批准的工作流走 Hermai CLI 的 signed-write 路径。设置 `HERMAI_FETCH_TIMEOUT_MS` 可覆盖默认的 120 秒超时。
 
 ### `submit_schema_request`
 

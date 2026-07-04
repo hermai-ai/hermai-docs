@@ -54,7 +54,7 @@ MCP client 的配置路徑因 runtime 而異,但 server entry 形狀如下:
 
 ### `fetch_schema`
 
-透過託管的 `/v1/fetch` 執行已註冊的 schema 並回傳即時資料。僅當設定了 `HERMAI_API_KEY`(或 `HERMAI_PLATFORM_KEY`)時才會暴露此工具,且**每次呼叫都會消耗 Hermai credits**。
+透過託管的 `/v1/fetch` 執行已註冊的 schema 並回傳即時資料。僅當設定了 `HERMAI_API_KEY`(或 `HERMAI_PLATFORM_KEY`)時才會暴露此工具,且**會消耗 Hermai credits**:標準呼叫消耗 1 credit,部分成本更高的網站消耗 5,且只有成功的呼叫才計費。
 
 先用 `lookup_schema` 解析出確切的 `site` 和 `endpoint`,然後呼叫:
 
@@ -62,7 +62,7 @@ MCP client 的配置路徑因 runtime 而異,但 server entry 形狀如下:
 - `endpoint` — schema 中的 endpoint 名稱,例如 `product_search`。區分大小寫。
 - `params` — 可選的 endpoint 參數,鍵值對形式。
 
-回傳結果包含上游 `data` 以及一個 meta 摘要(`credits_used`、`credits_remaining`、`latency_ms`、`cached`);失敗的 fetch 會回傳 API 的 `code` 和 `message`。僅用於讀取工作流。寫入和需擁有者核准的工作流走 Hermai CLI 的 signed-write 路徑。設定 `HERMAI_FETCH_TIMEOUT_MS` 可覆寫預設的 120 秒逾時。
+回傳結果包含上游 `data` 以及一個 meta 摘要(`credits_used`、`credits_remaining`、`latency_ms`、`cached`);失敗的 fetch 會回傳 API 的 `code` 和 `message`,當 workspace 的 credits 用盡時還會回傳 `upgrade_to` 和 `upgrade_url`。僅用於讀取工作流。寫入和需擁有者核准的工作流走 Hermai CLI 的 signed-write 路徑。設定 `HERMAI_FETCH_TIMEOUT_MS` 可覆寫預設的 120 秒逾時。
 
 ### `submit_schema_request`
 

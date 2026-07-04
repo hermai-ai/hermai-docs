@@ -54,7 +54,7 @@ Browse public schemas with optional filters such as `q`, `category`, `verified`,
 
 ### `fetch_schema`
 
-Execute a registered schema through hosted `/v1/fetch` and return live data. This tool is only exposed when `HERMAI_API_KEY` (or `HERMAI_PLATFORM_KEY`) is set, and it **consumes Hermai credits per call**.
+Execute a registered schema through hosted `/v1/fetch` and return live data. This tool is only exposed when `HERMAI_API_KEY` (or `HERMAI_PLATFORM_KEY`) is set, and it **consumes Hermai credits**: a standard call costs 1 credit, some higher cost sites cost 5, and only successful calls are billed.
 
 Resolve the exact `site` and `endpoint` with `lookup_schema` first, then call:
 
@@ -62,7 +62,7 @@ Resolve the exact `site` and `endpoint` with `lookup_schema` first, then call:
 - `endpoint` — endpoint name from the schema, for example `product_search`. Case-sensitive.
 - `params` — optional endpoint parameters as key/value pairs.
 
-The result includes the upstream `data` plus a meta summary (`credits_used`, `credits_remaining`, `latency_ms`, `cached`); failed fetches surface the API `code` and `message`. Use it for read workflows only. Write and owner-approved workflows go through the Hermai CLI's signed-write path. Set `HERMAI_FETCH_TIMEOUT_MS` to override the default 120s timeout.
+The result includes the upstream `data` plus a meta summary (`credits_used`, `credits_remaining`, `latency_ms`, `cached`); failed fetches surface the API `code` and `message`, plus `upgrade_to` and `upgrade_url` when the workspace is out of credits. Use it for read workflows only. Write and owner-approved workflows go through the Hermai CLI's signed-write path. Set `HERMAI_FETCH_TIMEOUT_MS` to override the default 120s timeout.
 
 ### `submit_schema_request`
 

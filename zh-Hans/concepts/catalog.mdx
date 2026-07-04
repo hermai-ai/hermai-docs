@@ -78,9 +78,11 @@ curl "https://api.hermai.ai/v1/categories"
 | 层级 | 每小时 | 每天 |
 |------|-------|------|
 | 匿名(无 API key) | 5 | - |
-| 已注册(免费) | 1,000 | 3,000 |
+| 已注册(免费) | 1,000 | 1,000 |
+| Starter | 3,000 | 15,000 |
+| Pro | 5,000 | 60,000 |
 
-匿名请求按 IP 限流,已注册请求按账号限流。免费账号还有每分钟 20 次的突发限制。超过限制会返回 `429 Too Many Requests`。
+匿名请求按 IP 限流。已注册请求按用户账号或 workspace 限流。免费账号还有每分钟 20 次的突发上限(Starter 为 60,Pro 为 100)。超过限制会返回 `429 Too Many Requests`。完整套餐表见 [credits 与用量](/zh-Hans/concepts/credits-and-usage)。
 
 ## 浏览 registry
 

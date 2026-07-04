@@ -49,6 +49,16 @@ curl -sS -X POST "https://api.hermai.ai/v1/fetch" \
 }
 ```
 
+### Credit 成本
+
+`credits_used` 反映本次呼叫的加權成本:
+
+- 標準請求消耗 **1 credit**。
+- 部分成本更高的網站(例如大型消費類電商平台,以及某些房產或旅行類入口網站)消耗 **5 credits**。
+- 多結果端點(例如 comparison set)依回傳的每筆結果計費。
+- 只有成功的請求才計費。失敗的請求免費。
+- 每個 schema 都會顯示其確切的 credit 成本。
+
 ## 請求 body
 
 | 欄位 | 類型 | 必填 | 說明 |
@@ -115,9 +125,25 @@ Hosted fetch 很適合論文和程式碼倉庫元資料工作流。常見已註�
 | `INVALID_JSON` | 請求 body 不是有效 JSON |
 | `MISSING_SITE` | 缺少 `site` |
 | `MISSING_ENDPOINT` | 缺少 `endpoint` |
-| `INSUFFICIENT_CREDITS` | 帳號沒有足夠 credits 用於 hosted execution |
+| `INSUFFICIENT_CREDITS` | workspace 沒有足夠 credits 用於 hosted execution |
 | `FETCH_FAILED` | Hermai 無法完成上游請求 |
 | `RESOURCE_UNAVAILABLE` | 端點需要的 hosted resource 暫不可用 |
+
+### credits 用盡時
+
+當 workspace 的 credits 用盡時,`POST /v1/fetch` 會回傳 `402`,且錯誤中帶有結構化的升級路徑,agent 無需解析文字訊息即可據此行動。`upgrade_to` 給出目標方案或 add-on,`upgrade_url` 連結到結帳頁面:
+
+```json
+{
+  "success": false,
+  "error": {
+    "code": "INSUFFICIENT_CREDITS",
+    "message": "insufficient credits",
+    "upgrade_to": "pro",
+    "upgrade_url": "https://hermai.ai/dashboard/billing"
+  }
+}
+```
 
 ## 何時改用 catalog
 

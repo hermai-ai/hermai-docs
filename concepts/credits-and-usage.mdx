@@ -21,7 +21,7 @@ Enterprise plans cover higher volumes with custom pricing. See [pricing](https:/
 - Some higher cost sites, such as large consumer marketplaces and certain listing or travel portals, cost **5 credits**.
 - A few endpoints that return multiple results bill per result.
 - Only successful requests are billed. Failed requests are free.
-- Every schema shows its exact credit cost.
+- Each response reports the exact credits it used (`meta.credits_used`).
 
 The response `meta` object includes `credits_used` and `credits_remaining` so your agent can track usage:
 

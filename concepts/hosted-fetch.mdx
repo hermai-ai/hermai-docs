@@ -57,7 +57,7 @@ Response:
 - Some higher cost sites, such as large consumer marketplaces and certain listing or travel portals, cost **5 credits**.
 - Endpoints that return multiple results (such as a comparison set) bill per result.
 - Only successful requests are billed. Failed requests are free.
-- Every schema shows its exact credit cost.
+- Each response reports the exact credits it used (`meta.credits_used`).
 
 ## Request body
 
@@ -140,7 +140,7 @@ When a workspace is out of credits, `POST /v1/fetch` returns `402` and the error
     "code": "INSUFFICIENT_CREDITS",
     "message": "insufficient credits",
     "upgrade_to": "pro",
-    "upgrade_url": "https://hermai.ai/dashboard/billing"
+    "upgrade_url": "https://hermai.ai/pricing"
   }
 }
 ```

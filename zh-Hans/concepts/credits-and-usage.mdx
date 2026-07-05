@@ -21,7 +21,7 @@ Enterprise 套餐以定制价格覆盖更高用量。详情见 [pricing](https:/
 - 部分成本更高的站点(例如大型消费类电商平台,以及某些房产或旅行类门户)消耗 **5 credits**。
 - 少数多结果端点按返回的每条结果计费。
 - 只有成功的请求才计费。失败的请求免费。
-- 每个 schema 都会显示其确切的 credit 成本。
+- 每次响应都会报告其确切消耗的 credits(`meta.credits_used`)。
 
 Hosted fetch 使用 credits。响应的 `meta` 对象包含 `credits_used` 和 `credits_remaining`,方便 agent 跟踪用量:
 

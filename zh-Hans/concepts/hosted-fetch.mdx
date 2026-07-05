@@ -57,7 +57,7 @@ curl -sS -X POST "https://api.hermai.ai/v1/fetch" \
 - 部分成本更高的站点(例如大型消费类电商平台,以及某些房产或旅行类门户)消耗 **5 credits**。
 - 多结果端点(例如 comparison set)按返回的每条结果计费。
 - 只有成功的请求才计费。失败的请求免费。
-- 每个 schema 都会显示其确切的 credit 成本。
+- 每次响应都会报告其确切消耗的 credits(`meta.credits_used`)。
 
 ## 请求体
 
@@ -140,7 +140,7 @@ Hosted fetch 很适合论文和代码仓库元数据工作流。常见已注册�
     "code": "INSUFFICIENT_CREDITS",
     "message": "insufficient credits",
     "upgrade_to": "pro",
-    "upgrade_url": "https://hermai.ai/dashboard/billing"
+    "upgrade_url": "https://hermai.ai/pricing"
   }
 }
 ```

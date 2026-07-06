@@ -3,30 +3,25 @@ title: "Credits 與用量"
 description: "速率限制、credits,以及目前版本的用量機制。"
 ---
 
-## 速率限制
+## 方案與 credits
 
-Runtime API 請求有速率限制。主要計數端點列在下方,限制視是否已驗證而定:
+Hosted execution 以 credits 計價。每個方案都包含每月的 credits 額度,並在你的帳單日重置:
 
-| 層級 | 每小時 | 每天 | 身份追蹤方式 |
-|------|-------|------|------------|
-| 匿名(無 API key) | 5 | - | 依 IP 位址 |
-| 已註冊(免費) | 1,000 | 3,000 | 依使用者帳號 |
+| 方案 | 價格 | Credits / 月 |
+|------|------|-------------|
+| Free | $0 | 1,000 |
+| Starter | $49 | 15,000 |
+| Pro | $149 | 60,000 |
 
-免費帳號還有每分鐘 20 次的突發限制。超過任何限制都會收到 `429 Too Many Requests`。
+Enterprise 方案以客製價格涵蓋更高用量。詳情見 [pricing](https://hermai.ai/pricing)。
 
-取得 API key 免費 - 到 [hermai.ai/register](https://hermai.ai/register) 註冊並在 dashboard 建立。
+### credits 如何計算
 
-## Credits
-
-Credits 透過貢獻與社群活動賺取:
-
-| 行為 | Credits |
-|------|---------|
-| 第一次發送請求 | +50 |
-| 推薦朋友 | 每位受邀 +100 |
-| 貢獻 schema | 每個網站 +50 |
-
-Credits 會累積在帳號中,並顯示在 dashboard。
+- 標準請求消耗 **1 credit**。
+- 部分成本更高的網站(例如大型消費類電商平台,以及某些房產或旅行類入口網站)消耗 **5 credits**。
+- 少數多結果端點依回傳的每筆結果計費。
+- 只有成功的請求才計費。失敗的請求免費。
+- 每次回應都會報告其確切消耗的 credits(`meta.credits_used`)。
 
 Hosted fetch 使用 credits。回應的 `meta` 物件包含 `credits_used` 和 `credits_remaining`,方便 agent 追蹤用量:
 
@@ -36,10 +31,37 @@ Hosted fetch 使用 credits。回應的 `meta` 物件包含 `credits_used` 和 `
   "data": {},
   "meta": {
     "credits_used": 1,
-    "credits_remaining": 499
+    "credits_remaining": 999
   }
 }
 ```
+
+## 速率限制
+
+Runtime API 請求在 credits 額度之上還有速率限制。限制視你的方案而定:
+
+| 層級 | 每分鐘 | 每小時 | 每天 | 身份追蹤方式 |
+|------|-------|-------|------|------------|
+| 匿名(無 API key) | - | 5 | - | 依 IP 位址 |
+| Free | 20 | 1,000 | 1,000 | 依使用者帳號 |
+| Starter | 60 | 3,000 | 15,000 | 依 workspace |
+| Pro | 100 | 5,000 | 60,000 | 依 workspace |
+
+超過任何限制都會收到 `429 Too Many Requests` 回應。速率限制用於突發保護;每月 credits 額度才是主要的用量預算。
+
+取得 API key 免費 - 到 [hermai.ai/register](https://hermai.ai/register) 註冊並在 dashboard 建立。
+
+## 社群獎勵
+
+你也可以透過貢獻與社群活動賺取 credits:
+
+| 行為 | Credits |
+|------|---------|
+| 第一次發送請求 | +50 |
+| 推薦朋友 | 每位受邀 +100 |
+| 貢獻 schema | 每個網站 +50 |
+
+Credits 會累積在帳號中,並顯示在 dashboard。
 
 ## 哪些算一次請求?
 

@@ -3,30 +3,25 @@ title: "Credits 与用量"
 description: "速率限制、credits,以及当前版本的用量机制。"
 ---
 
-## 速率限制
+## 套餐与 credits
 
-Runtime API 请求有速率限制。主要计数端点列在下方,限制取决于是否已验证:
+Hosted execution 以 credits 计价。每个套餐都包含每月的 credits 额度,并在你的账单日重置:
 
-| 层级 | 每小时 | 每天 | 身份跟踪方式 |
-|------|-------|------|------------|
-| 匿名(无 API key) | 5 | - | 按 IP 地址 |
-| 已注册(免费) | 1,000 | 3,000 | 按用户账号 |
+| 套餐 | 价格 | Credits / 月 |
+|------|------|-------------|
+| Free | $0 | 1,000 |
+| Starter | $49 | 15,000 |
+| Pro | $149 | 60,000 |
 
-免费账号还有每分钟 20 次的突发限制。超过任何限制都会收到 `429 Too Many Requests`。
+Enterprise 套餐以定制价格覆盖更高用量。详情见 [pricing](https://hermai.ai/pricing)。
 
-获取 API key 免费 - 到 [hermai.ai/register](https://hermai.ai/register) 注册并在 dashboard 创建。
+### credits 如何计算
 
-## Credits
-
-Credits 通过贡献与社区活动赚取:
-
-| 行为 | Credits |
-|------|---------|
-| 第一次发起请求 | +50 |
-| 推荐朋友 | 每位受邀 +100 |
-| 贡献 schema | 每个网站 +50 |
-
-Credits 会累积在账号中,并显示在 dashboard。
+- 标准请求消耗 **1 credit**。
+- 部分成本更高的站点(例如大型消费类电商平台,以及某些房产或旅行类门户)消耗 **5 credits**。
+- 少数多结果端点按返回的每条结果计费。
+- 只有成功的请求才计费。失败的请求免费。
+- 每次响应都会报告其确切消耗的 credits(`meta.credits_used`)。
 
 Hosted fetch 使用 credits。响应的 `meta` 对象包含 `credits_used` 和 `credits_remaining`,方便 agent 跟踪用量:
 
@@ -36,10 +31,37 @@ Hosted fetch 使用 credits。响应的 `meta` 对象包含 `credits_used` 和 `
   "data": {},
   "meta": {
     "credits_used": 1,
-    "credits_remaining": 499
+    "credits_remaining": 999
   }
 }
 ```
+
+## 速率限制
+
+Runtime API 请求在 credits 额度之上还有速率限制。限制取决于你的套餐:
+
+| 层级 | 每分钟 | 每小时 | 每天 | 身份跟踪方式 |
+|------|-------|-------|------|------------|
+| 匿名(无 API key) | - | 5 | - | 按 IP 地址 |
+| Free | 20 | 1,000 | 1,000 | 按用户账号 |
+| Starter | 60 | 3,000 | 15,000 | 按 workspace |
+| Pro | 100 | 5,000 | 60,000 | 按 workspace |
+
+超过任何限制都会收到 `429 Too Many Requests` 响应。速率限制用于突发保护;每月 credits 额度才是主要的用量预算。
+
+获取 API key 免费 - 到 [hermai.ai/register](https://hermai.ai/register) 注册并在 dashboard 创建。
+
+## 社区奖励
+
+你也可以通过贡献与社区活动赚取 credits:
+
+| 行为 | Credits |
+|------|---------|
+| 第一次发起请求 | +50 |
+| 推荐朋友 | 每位受邀 +100 |
+| 贡献 schema | 每个网站 +50 |
+
+Credits 会累积在账号中,并显示在 dashboard。
 
 ## 哪些算一次请求?
 

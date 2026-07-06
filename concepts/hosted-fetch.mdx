@@ -43,11 +43,21 @@ Response:
     "source": "gateway",
     "latency_ms": 1234,
     "credits_used": 1,
-    "credits_remaining": 499,
+    "credits_remaining": 999,
     "cached": false
   }
 }
 ```
+
+### Credit cost
+
+`credits_used` reflects the weighted cost of the call:
+
+- A standard request costs **1 credit**.
+- Some higher cost sites, such as large consumer marketplaces and certain listing or travel portals, cost **5 credits**.
+- Endpoints that return multiple results (such as a comparison set) bill per result.
+- Only successful requests are billed. Failed requests are free.
+- Each response reports the exact credits it used (`meta.credits_used`).
 
 ## Request body
 
@@ -115,9 +125,25 @@ Common error codes include:
 | `INVALID_JSON` | Request body is not valid JSON |
 | `MISSING_SITE` | `site` is required |
 | `MISSING_ENDPOINT` | `endpoint` is required |
-| `INSUFFICIENT_CREDITS` | The account does not have enough credits for hosted execution |
+| `INSUFFICIENT_CREDITS` | The workspace does not have enough credits for hosted execution |
 | `FETCH_FAILED` | Hermai could not complete the upstream request |
 | `RESOURCE_UNAVAILABLE` | A hosted resource needed by the endpoint is not currently available |
+
+### Running out of credits
+
+When a workspace is out of credits, `POST /v1/fetch` returns `402` and the error carries a structured upgrade path so an agent can act on it without parsing the message. `upgrade_to` names the target plan or add-on and `upgrade_url` links to checkout:
+
+```json
+{
+  "success": false,
+  "error": {
+    "code": "INSUFFICIENT_CREDITS",
+    "message": "insufficient credits",
+    "upgrade_to": "pro",
+    "upgrade_url": "https://hermai.ai/pricing"
+  }
+}
+```
 
 ## When to use catalog instead
 

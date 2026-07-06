@@ -3,22 +3,57 @@ title: "Credits & usage"
 description: "Rate limits, credits, and how usage works in the current release."
 ---
 
+## Plans and credits
+
+Hosted execution is priced in credits. Each plan includes a monthly credit allowance that resets on your billing date:
+
+| Plan | Price | Credits / month |
+|------|-------|-----------------|
+| Free | $0 | 1,000 |
+| Starter | $49 | 15,000 |
+| Pro | $149 | 60,000 |
+
+Enterprise plans cover higher volumes with custom pricing. See [pricing](https://hermai.ai/pricing) for details.
+
+### How credits are counted
+
+- A standard request costs **1 credit**.
+- Some higher cost sites, such as large consumer marketplaces and certain listing or travel portals, cost **5 credits**.
+- A few endpoints that return multiple results bill per result.
+- Only successful requests are billed. Failed requests are free.
+- Each response reports the exact credits it used (`meta.credits_used`).
+
+The response `meta` object includes `credits_used` and `credits_remaining` so your agent can track usage:
+
+```json
+{
+  "success": true,
+  "data": {},
+  "meta": {
+    "credits_used": 1,
+    "credits_remaining": 999
+  }
+}
+```
+
 ## Rate limits
 
-Runtime API requests are rate-limited. The main counted endpoints are listed below, and limits depend on whether you're authenticated:
+Runtime API requests are rate-limited on top of your credit allowance. Limits depend on your plan:
 
-| Tier | Per hour | Per day | How identity is tracked |
-|------|----------|---------|------------------------|
-| Anonymous (no API key) | 5 | None | By IP address |
-| Registered (free) | 1,000 | 3,000 | By user account |
+| Tier | Per minute | Per hour | Per day | How identity is tracked |
+|------|-----------|----------|---------|------------------------|
+| Anonymous (no API key) | - | 5 | None | By IP address |
+| Free | 20 | 1,000 | 1,000 | By user account |
+| Starter | 60 | 3,000 | 15,000 | By workspace |
+| Pro | 100 | 5,000 | 60,000 | By workspace |
 
-Free accounts also have a 20 requests/minute burst cap. If you exceed any limit, you'll get a `429 Too Many Requests` response.
+If you exceed any limit, you'll get a `429 Too Many Requests` response. Rate limits are burst protection; your monthly credit allowance is the main usage budget.
 
 Getting an API key is free. [Sign up](https://hermai.ai/register) and create one in the dashboard.
 
-## Credits
+## Community rewards
 
-Credits are earned through contributions and community activity:
+You can also earn credits through contributions and community activity:
 
 | Action | Credits |
 |--------|---------|
@@ -27,19 +62,6 @@ Credits are earned through contributions and community activity:
 | Contribute a schema | +50 per site |
 
 Credits accumulate in your account and are shown in the dashboard.
-
-Hosted fetch uses credits. The response `meta` object includes `credits_used` and `credits_remaining` so your agent can track usage:
-
-```json
-{
-  "success": true,
-  "data": {},
-  "meta": {
-    "credits_used": 1,
-    "credits_remaining": 499
-  }
-}
-```
 
 ## What counts as a request?
 

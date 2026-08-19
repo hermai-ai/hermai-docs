@@ -1,0 +1,353 @@
+---
+title: "Brand API"
+description: "Turn a company domain or work email into a structured brand profile."
+---
+
+Brand API turns a company domain or work email into a structured brand profile: name, description, logos, colors, social profiles, and key links. Every returned field carries its own source, so your product can show where a value came from.
+
+Send a domain or email to `POST /v1/brand/retrieve`. Hermai returns cached data when it has a recent profile, and starts a new extraction when it does not.
+
+## Retrieve a brand profile
+
+Send exactly one of `domain` or `email`.
+
+```bash
+export HERMAI_API_KEY="hm_sk_..."
+
+curl -sS -X POST "https://api.hermai.ai/v1/brand/retrieve" \
+  -H "Authorization: Bearer ${HERMAI_API_KEY}" \
+  -H "Content-Type: application/json" \
+  -d '{"domain":"stripe.com"}'
+```
+
+When you send `email`, Hermai keeps only the domain. It never stores or forwards the mailbox local part.
+
+### Request body
+
+| Field | Type | Required | Description |
+| --- | --- | --- | --- |
+| `domain` | string | Conditional | Company domain. Use this field or `email`, not both. |
+| `email` | string | Conditional | Work email. Use this field or `domain`, not both. A personal email provider domain, such as `gmail.com`, is rejected. |
+| `max_age_s` | integer | No | Maximum accepted cache age, in seconds. Hermai raises a value below your plan floor up to the floor: 2,592,000 seconds (30 days) on the free plan, 604,800 seconds (7 days) on paid plans. `refresh.clamped` reports when Hermai raised your value. |
+| `wait_ms` | integer | No | Time to wait for a cold extraction before returning a pending result. Default 1500. Maximum 15000. Set `0` to get a pending result immediately. |
+| `include_synthesized` | boolean | No | Reserved for a future opt in to generated field variants. It has no effect today. |
+| `force_refresh` | boolean | No | Not available today. Any request that sets this to `true` fails with `BRAND_FORCE_REFRESH_FORBIDDEN`. |
+
+## Response
+
+```json
+{
+  "status": "ok",
+  "requested": {
+    "input_type": "domain",
+    "domain": "stripe.com"
+  },
+  "resolved": {
+    "canonical_domain": "stripe.com",
+    "ambiguity": null,
+    "redirect_terminal": "https://stripe.com"
+  },
+  "brand": {
+    "name": {
+      "value": "Stripe",
+      "source": { "url": "https://stripe.com/", "signal": "json_ld" },
+      "observed_at": "2026-08-18T16:41:47Z",
+      "origin": "observed"
+    },
+    "description": {
+      "value": "Stripe powers online and in-person payment processing and financial solutions for businesses of all sizes.",
+      "source": { "url": "https://stripe.com/", "signal": "json_ld" },
+      "observed_at": "2026-08-18T16:41:47Z",
+      "origin": "observed"
+    },
+    "logos": [
+      {
+        "url": "https://api.hermai.ai/v1/brand/logo/61a219a0...",
+        "kind": "wordmark",
+        "theme": "light",
+        "format": "svg",
+        "width": 60,
+        "height": 25,
+        "source": { "url": "https://stripe.com/", "signal": "header_dom" },
+        "observed_at": "2026-08-18T16:41:47Z",
+        "origin": "observed"
+      }
+    ],
+    "colors": [
+      {
+        "hex": "#031323",
+        "role": "accent",
+        "source": { "url": "https://stripe.com/", "signal": "header_dom" },
+        "observed_at": "2026-08-18T16:41:47Z",
+        "origin": "inferred"
+      }
+    ],
+    "socials": [
+      { "type": "twitter", "url": "https://twitter.com/stripe", "source": { "url": "https://stripe.com/", "signal": "json_ld" }, "observed_at": "2026-08-18T16:41:47Z", "origin": "observed" }
+    ],
+    "links": {
+      "careers": { "value": "https://stripe.com/careers", "source": { "url": "https://stripe.com/", "signal": "header_dom" }, "observed_at": "2026-08-18T16:41:47Z", "origin": "observed" },
+      "pricing": { "value": "https://stripe.com/pricing", "source": { "url": "https://stripe.com/", "signal": "header_dom" }, "observed_at": "2026-08-18T16:41:47Z", "origin": "observed" },
+      "privacy": null,
+      "terms": null,
+      "contact": null,
+      "blog": null
+    }
+  },
+  "application_theme": {
+    "version": "v1",
+    "mode": "observed",
+    "colors": { "action": "#031323", "on_action": "#FFFFFF", "text_accent": "#031323", "tint": "#E6E7E9", "on_tint": "#111827", "border": "#959CA3", "focus": "#031323", "data_primary": "#031323" },
+    "identity": {
+      "standard": { "asset": { "url": "https://api.hermai.ai/v1/brand/logo/61a219a0...", "kind": "wordmark" }, "show_company_name": false, "fallback": "none" },
+      "compact": { "asset": null, "show_company_name": true, "fallback": "monogram" },
+      "on_dark": { "asset": { "url": "https://api.hermai.ai/v1/brand/logo/cb86ad33...", "kind": "icon" }, "show_company_name": true, "fallback": "asset_with_company_name" }
+    },
+    "fallback": null
+  },
+  "assembled_at": "2026-08-18T16:41:47Z",
+  "profile_generation": 1,
+  "theme_readiness": "observed",
+  "fallback_fields": ["accent"],
+  "enrichment_status": "",
+  "refresh": { "state": "stale", "clamped": false },
+  "pending": null,
+  "usage": { "credits_consumed": 1, "credits_remaining": 999 }
+}
+```
+
+This example runs against `stripe.com`. Response shown trimmed for length; a live call returns more logos, colors, socials, and links than shown here.
+
+### Top level fields
+
+| Field | Description |
+| --- | --- |
+| `status` | The outcome of this lookup. See [Status values](#status-values). |
+| `requested` | The `input_type` (`domain` or `email`) and value you sent. |
+| `resolved` | The canonical domain Hermai matched, plus `redirect_terminal` (the URL Hermai landed on after following redirects) and `ambiguity`. `ambiguity` is `null` on a normal match, or `parked` (the domain is a parking or for sale page), `multi_brand` (the domain hosts more than one distinct brand), or `unresolved` (Hermai could not settle on one company). |
+| `brand` | The brand fields: `name`, `description`, `logos`, `colors`, `fonts`, `socials`, `links`. See [Field provenance](#field-provenance). |
+| `application_theme` | Ready to use theme tokens for applying this company's branding in your own product UI. Absent when Hermai has not derived a theme yet. See [Applying the theme](#applying-the-theme). |
+| `assembled_at` | When Hermai assembled this response. |
+| `refresh` | `state` is `fresh` (within your cache window), `stale` (past the window, serving the last known profile while a refresh may be running), or `refreshing` (a background refresh is in progress). `clamped` is `true` when Hermai raised your `max_age_s` to the plan floor. |
+| `pending` | Set only when `status` is `pending`. Carries `poll_after_ms` and a `token` for [polling a cold lookup](#cold-lookups-and-polling). |
+| `usage` | `credits_consumed` and `credits_remaining` for this call. See [Billing](#billing). |
+| `profile_generation` | Increments each time Hermai observes a material change to this company's identity. Use it to know when a cached theme or logo needs to be refreshed on your side. |
+| `theme_readiness` | `observed` when Hermai found real logo and color evidence for `application_theme`. `fallback` when your product should keep its own theme instead. |
+| `fallback_fields` | Names which theme inputs fell back, for example `["accent"]` or `["logo"]`. Empty when `theme_readiness` is `observed`. |
+| `enrichment_status` | Reports an optional secondary style pass. It never delays the response above. |
+
+## Field provenance
+
+Every field in `brand` carries where Hermai found it:
+
+| Property | Description |
+| --- | --- |
+| `source.url` | The page Hermai read the value from. |
+| `source.signal` | The signal that carried the value, for example `json_ld`, `header_dom`, `apple_touch_icon`, or `manifest`. |
+| `observed_at` | When Hermai last confirmed this value. |
+| `origin` | How Hermai arrived at the value. See below. |
+
+`origin` is one of:
+
+| Value | Meaning |
+| --- | --- |
+| `observed` | Hermai read this value directly from a page or a structured signal, such as JSON-LD or a manifest file. |
+| `inferred` | Hermai derived this value from other observed evidence, such as an accent color computed from a logo's dominant color. |
+| `synthesized` | Hermai generated this value rather than reading or deriving it from the site. |
+| `corrected` | Hermai overrode a low quality observed value with a better one. |
+
+There is no confidence score on any field. Use `origin` and `source` to judge how much to trust a value.
+
+## Description
+
+`description` is the company's own self authored summary, not a Hermai generated summary. Hermai checks sources in this priority order and uses the first one that passes:
+
+1. A JSON-LD `Organization` description, only when the JSON-LD confirms the organization belongs to the requested domain. An unconfirmed JSON-LD organization description is dropped, not used as a fallback.
+2. The `og:description` meta tag.
+3. The plain `<meta name="description">` tag.
+
+Hermai caps a description at 500 characters and cuts at the end of the last full sentence inside that limit. It never appends an ellipsis.
+
+Hermai rejects very short text, interstitial or bot challenge pages, cookie and consent notices, and keyword stuffed text. When nothing passes, `description` is absent.
+
+A real example, from `stripe.com`:
+
+```json
+{
+  "value": "Stripe powers online and in-person payment processing and financial solutions for businesses of all sizes.",
+  "source": { "url": "https://stripe.com/", "signal": "json_ld" },
+  "origin": "observed"
+}
+```
+
+## Status values
+
+| Status | Meaning |
+| --- | --- |
+| `ok` | Hermai found a complete usable profile. |
+| `partial` | Hermai found some usable fields. |
+| `pending` | Extraction is still running. See [Cold lookups and polling](#cold-lookups-and-polling). |
+| `personal_email` | The email belongs to a common personal email provider. |
+| `disposable_email` | The email belongs to a disposable email provider. |
+| `not_found` | Hermai could not resolve a usable company domain. |
+| `fetch_failed` | Hermai resolved the domain but could not complete extraction. Sites that block automated access return `fetch_failed`. |
+
+## Cold lookups and polling
+
+A domain Hermai has a fresh profile for returns immediately with `status` set to `ok`, `partial`, or one of the other terminal values.
+
+A domain Hermai has not extracted recently starts a new extraction. If it does not finish within `wait_ms`, `POST /v1/brand/retrieve` returns HTTP `202` with `status` set to `pending`:
+
+```json
+{
+  "status": "pending",
+  "pending": { "poll_after_ms": 1000, "token": "..." }
+}
+```
+
+Wait `pending.poll_after_ms`, then call `POST /v1/brand/poll` with the token:
+
+```bash
+curl -sS -X POST "https://api.hermai.ai/v1/brand/poll" \
+  -H "Authorization: Bearer ${HERMAI_API_KEY}" \
+  -H "Content-Type: application/json" \
+  -d '{"token":"..."}'
+```
+
+Poll again with the same token while the response keeps returning `202` and `status: pending`. A token stays valid for 5 minutes. Once extraction finishes, poll returns HTTP `200` with the finished profile.
+
+Polling itself is free. The first terminal delivery, whether from `retrieve` or from `poll`, bills under the normal rule below.
+
+## Applying the theme
+
+`application_theme` gives you ready made tokens for styling your product with this company's branding, so you do not have to rank logos or pick an accent color yourself.
+
+| Field | Description |
+| --- | --- |
+| `colors` | Eight color tokens: `action`, `on_action`, `text_accent`, `tint`, `on_tint`, `border`, `focus`, `data_primary`. |
+| `identity.standard` | The primary logo slot for light backgrounds. |
+| `identity.compact` | A logo slot sized for small spaces, such as a favicon sized area. |
+| `identity.on_dark` | A logo slot chosen for dark backgrounds. |
+| `mode` | `observed` when built from real evidence, `fallback` otherwise. |
+
+Each identity slot carries `asset` (a logo, or `null`), `show_company_name` (whether to also render the company name next to the asset), and `fallback` (what to show when `asset` is `null`, such as `monogram` or `asset_with_company_name`).
+
+## Billing
+
+A successful profile bills one ordinary Hermai credit, the same credit pool as every other Hermai endpoint. Hermai bills when `status` is `ok` or `partial` and the profile has at least one of: a name, a logo, or a color. A `partial` result that only carries a description, a social profile, or a link, with no name, logo, or color, does not bill.
+
+Pending results and failed lookups never bill.
+
+```json
+{
+  "usage": { "credits_consumed": 1, "credits_remaining": 999 }
+}
+```
+
+## Rate limits
+
+Brand endpoints apply three limits on top of each other. Warm requests, served from a recent cached profile, only count against the first two. Cold requests, which start a new extraction, count against all three.
+
+Standard per key rate limit, shared with every other Hermai endpoint:
+
+| Plan | Per minute |
+| --- | --- |
+| Free | 20 |
+| Starter | 60 |
+| Pro | 100 |
+| Enterprise | 120 |
+
+Brand specific workspace limit, shared by every key in your workspace:
+
+| Plan | Per minute |
+| --- | --- |
+| Free | 10 |
+| Starter | 60 |
+| Pro | 200 |
+| Enterprise | 200 |
+
+Cold extraction limit, applied only to lookups that start a new extraction:
+
+| Plan | Per minute |
+| --- | --- |
+| Free | 5 |
+| Starter | 20 |
+| Pro | 50 |
+| Enterprise | 50 |
+
+Any of the three returns HTTP `429` when exceeded.
+
+## Anonymous brand demo
+
+`POST /v1/brand/demo` runs a brand lookup without an API key and without spending credits. It takes a domain only and returns a smaller public projection: `status`, `domain`, and `brand.name`, `brand.description`, `brand.logos`, `brand.colors`. It never returns `socials`, `links`, or `usage`.
+
+```bash
+curl -sS -X POST "https://api.hermai.ai/v1/brand/demo" \
+  -H "Content-Type: application/json" \
+  -d '{"domain":"stripe.com"}'
+```
+
+```json
+{
+  "status": "ok",
+  "domain": "stripe.com",
+  "brand": {
+    "name": { "value": "Stripe", "origin": "observed" },
+    "description": { "value": "Stripe powers online and in-person payment processing and financial solutions for businesses of all sizes.", "origin": "observed" },
+    "logos": [ { "url": "https://api.hermai.ai/v1/brand/logo/61a219a0...", "kind": "wordmark" } ],
+    "colors": [ { "hex": "#031323", "role": "accent" } ]
+  }
+}
+```
+
+A cold demo lookup returns HTTP `202` with `status: pending` and a `poll_after_ms` hint. Repost the same domain after that delay. There is no poll token on the demo endpoint.
+
+The demo endpoint applies its own limits, separate from the authenticated limits above:
+
+| Limit | Value | Error code |
+| --- | --- | --- |
+| Total requests per IP per hour | 10 | `DEMO_RATE_LIMITED` |
+| New domain lookups per IP per hour | 3 | `DEMO_COLD_RATE_LIMITED` |
+| New domain lookups across all callers per day | A shared daily budget | `DEMO_BUDGET_EXHAUSTED` |
+
+Each of these returns HTTP `429` with a `Retry-After` header.
+
+## Errors
+
+Errors use the standard API envelope:
+
+```json
+{
+  "success": false,
+  "error": {
+    "code": "BRAND_RATE_LIMITED",
+    "message": "brand rate limit exceeded",
+    "retryable": false,
+    "retry_after": 30
+  }
+}
+```
+
+`retry_after` is present only on rate limit errors, in seconds. It is absent on every other error.
+
+| Code | HTTP | Meaning |
+| --- | --- | --- |
+| `UNAUTHORIZED` | 401 | The API key is missing, invalid, or expired. |
+| `RATE_LIMITED` | 429 | The standard per key rate limit was exceeded. |
+| `BRAND_RATE_LIMITED` | 429 | The brand specific workspace limit was exceeded. |
+| `BRAND_INVALID_REQUEST` | 400 | The request body is malformed, or sent both `domain` and `email`, or neither. |
+| `BRAND_FORCE_REFRESH_FORBIDDEN` | 403 | The request set `force_refresh` to `true`. Not available today. |
+| `DOMAIN_IS_MAILBOX_PROVIDER` | 422 | The domain belongs to a personal email provider, such as `gmail.com`, not a company. Use a company domain. |
+| `INSUFFICIENT_CREDITS` | 402 | The workspace does not have enough credits. |
+| `BRAND_DISABLED` | 503 | Brand lookups are temporarily unavailable. |
+| `BRAND_UNAVAILABLE` | 503 | The result behind a poll token is temporarily unavailable. |
+| `CREDIT_UNAVAILABLE` | 503 | Billing is temporarily unavailable. Retry the request. |
+| `BRAND_INVALID_POLL_TOKEN` | 400 | The poll token is missing, malformed, or expired. Start a new lookup. |
+| `BRAND_NOT_READY` | 404 | The requested logo asset does not exist. |
+| `DEMO_RATE_LIMITED`, `DEMO_COLD_RATE_LIMITED`, `DEMO_BUDGET_EXHAUSTED` | 429 | A demo endpoint limit was exceeded. See [Anonymous brand demo](#anonymous-brand-demo). |
+
+A `5xx` response, such as `BRAND_RESPONSE_INVALID`, means Hermai failed on its own side. Retry the request.
+
+## Authentication
+
+Use the same Bearer token as every other Hermai API route. See [API keys](/concepts/api-keys).

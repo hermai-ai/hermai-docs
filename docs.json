@@ -26,6 +26,7 @@
             "pages": [
               "concepts/how-hermai-works",
               "concepts/hosted-fetch",
+              "concepts/brand-api",
               "concepts/schemas",
               "concepts/catalog",
               "concepts/actions",
